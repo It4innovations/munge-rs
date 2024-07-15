@@ -7,7 +7,6 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 pub mod credential;
 pub mod ctx;
 pub mod enums;
-pub mod error;
 
 // C prototype: `munge_err_t munge_encode(char **cred, munge_ctx_t ctx, const void *buf, int len);`
 // pub fn encode(payload: Option<&'_ [u8]>) -> Result<String, error::MungeError> {
@@ -40,7 +39,12 @@ mod libTests {
             );
             _err = munge_encode(cred, ctx, ptr::null(), 0);
         }
-        assert_eq!(_err, munge_err_EMUNGE_SUCCESS);
+        assert_eq!(
+            _err,
+            munge_err_EMUNGE_SUCCESS,
+            "{:?}",
+            enums::MungeError::from_u32(_err)
+        );
 
         let cred_value: *const c_char = unsafe { *cred };
 
@@ -58,7 +62,12 @@ mod libTests {
             );
         }
         println!("UID: {}, \tGID: {}", uid, gid);
-        assert_eq!(_decode_err, munge_err_EMUNGE_SUCCESS);
+        assert_eq!(
+            _decode_err,
+            munge_err_EMUNGE_SUCCESS,
+            "{:?}",
+            enums::MungeError::from_u32(_decode_err)
+        );
     }
 
     #[test]
@@ -78,6 +87,11 @@ mod libTests {
             );
             _err = munge_encode(cred, ctx, ptr::null(), 0);
         }
-        assert_eq!(_err, munge_err_EMUNGE_SUCCESS);
+        assert_eq!(
+            _err,
+            munge_err_EMUNGE_SUCCESS,
+            "{:?}",
+            enums::MungeError::from_u32(_err)
+        );
     }
 }
