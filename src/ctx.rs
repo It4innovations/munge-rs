@@ -1,9 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{
-    error::{self, MungeError},
-    mungeOption::{self},
-};
+use crate::enums::{self, MungeError};
 
 pub struct Context {
     ctx: *mut crate::munge_ctx,
@@ -19,13 +16,13 @@ impl Context {
         }
     }
 
-    pub fn set_socket(&mut self, path: PathBuf) -> error::MungeError {
+    pub fn set_socket(&mut self, path: PathBuf) -> MungeError {
         self.socket = path;
         let mut err = 42;
         err = unsafe {
             crate::munge_ctx_set(
                 self.ctx,
-                mungeOption::MungeOption::SOCKET.to_u32() as i32,
+                enums::MungeOption::SOCKET.to_u32() as i32,
                 &self.socket,
             )
         };
@@ -41,7 +38,7 @@ impl Drop for Context {
 
 #[cfg(test)]
 mod contextTests {
-    use crate::{ctx::Context, error::MungeError};
+    use crate::{ctx::Context, enums::MungeError};
     use std::path::PathBuf;
 
     #[test]
@@ -65,7 +62,7 @@ mod contextTests {
     //     unsafe {
     //         get_err = MungeError::from_u32(crate::munge_ctx_get(
     //             ctx.ctx,
-    //             mungeOption::MungeOption::SOCKET.to_u32() as i32,
+    //             enums::MungeOption::SOCKET.to_u32() as i32,
     //             &mut path,
     //         ));
     //     }
