@@ -6,15 +6,14 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 pub mod credential;
 pub mod ctx;
+pub mod enums;
 pub mod error;
-pub mod mungeOption;
 
 // C prototype: `munge_err_t munge_encode(char **cred, munge_ctx_t ctx, const void *buf, int len);`
-pub fn encode(payload: Option<&'_ [u8]>) -> Result<String, error::MungeError> {
-    todo!()
-}
+// pub fn encode(payload: Option<&'_ [u8]>) -> Result<String, error::MungeError> {
+//     todo!()
+// }
 
-// TODO: Implement encode decode test
 #[cfg(test)]
 mod libTests {
 
