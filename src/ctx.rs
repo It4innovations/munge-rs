@@ -20,14 +20,12 @@ impl Context {
         self.socket = path;
         let mut err = 42;
         err = unsafe {
-            crate::munge_ctx_set(
-                self.ctx,
-                enums::MungeOption::SOCKET.to_u32() as i32,
-                &self.socket,
-            )
+            crate::munge_ctx_set(self.ctx, enums::MungeOption::SOCKET as i32, &self.socket)
         };
         MungeError::from_u32(err)
     }
+
+    // pub fn set_
 }
 
 impl Drop for Context {

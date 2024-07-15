@@ -1,83 +1,45 @@
+use std::fmt::Debug;
+
+#[repr(u32)]
 pub enum MungeOption {
-    CIPHER_TYPE,
-    MAC_TYPE,
-    ZIP_TYPE,
-    REALM,
-    TTL,
-    ADDR4,
-    ENCODE_TIME,
-    DECODE_TIME,
-    SOCKET,
-    UID_RESTRICTION,
-    GID_RESTRICTION,
+    CIPHER_TYPE = crate::munge_opt_MUNGE_OPT_CIPHER_TYPE,
+    MAC_TYPE = crate::munge_opt_MUNGE_OPT_MAC_TYPE,
+    ZIP_TYPE = crate::munge_opt_MUNGE_OPT_ZIP_TYPE,
+    REALM = crate::munge_opt_MUNGE_OPT_REALM,
+    TTL = crate::munge_opt_MUNGE_OPT_TTL,
+    ADDR4 = crate::munge_opt_MUNGE_OPT_ADDR4,
+    ENCODE_TIME = crate::munge_opt_MUNGE_OPT_ENCODE_TIME,
+    DECODE_TIME = crate::munge_opt_MUNGE_OPT_DECODE_TIME,
+    SOCKET = crate::munge_opt_MUNGE_OPT_SOCKET,
+    UID_RESTRICTION = crate::munge_opt_MUNGE_OPT_UID_RESTRICTION,
+    GID_RESTRICTION = crate::munge_opt_MUNGE_OPT_GID_RESTRICTION,
 }
 
-impl MungeOption {
-    pub fn to_u32(self) -> u32 {
-        match self {
-            MungeOption::CIPHER_TYPE => crate::munge_opt_MUNGE_OPT_CIPHER_TYPE,
-            MungeOption::MAC_TYPE => crate::munge_opt_MUNGE_OPT_MAC_TYPE,
-            MungeOption::ZIP_TYPE => crate::munge_opt_MUNGE_OPT_ZIP_TYPE,
-            MungeOption::REALM => crate::munge_opt_MUNGE_OPT_REALM,
-            MungeOption::TTL => crate::munge_opt_MUNGE_OPT_TTL,
-            MungeOption::ADDR4 => crate::munge_opt_MUNGE_OPT_ADDR4,
-            MungeOption::ENCODE_TIME => crate::munge_opt_MUNGE_OPT_ENCODE_TIME,
-            MungeOption::DECODE_TIME => crate::munge_opt_MUNGE_OPT_DECODE_TIME,
-            MungeOption::SOCKET => crate::munge_opt_MUNGE_OPT_SOCKET,
-            MungeOption::UID_RESTRICTION => crate::munge_opt_MUNGE_OPT_UID_RESTRICTION,
-            MungeOption::GID_RESTRICTION => crate::munge_opt_MUNGE_OPT_GID_RESTRICTION,
-        }
-    }
-}
-
+#[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeError {
-    Snafu,
-    BadArg,
-    BadLength,
-    Overflow,
-    NoMemory,
-    Socket,
-    Timeout,
-    BadCred,
-    BadVersion,
-    BadCipher,
-    BadMac,
-    BadZip,
-    BadRealm,
-    CredInvalid,
-    CredExpired,
-    CredRewound,
-    CredReplayed,
-    CredUnauthorized,
-    Success,
+    Snafu = crate::munge_err_EMUNGE_SNAFU,
+    BadArg = crate::munge_err_EMUNGE_BAD_ARG,
+    BadLength = crate::munge_err_EMUNGE_BAD_LENGTH,
+    Overflow = crate::munge_err_EMUNGE_OVERFLOW,
+    NoMemory = crate::munge_err_EMUNGE_NO_MEMORY,
+    Socket = crate::munge_err_EMUNGE_SOCKET,
+    Timeout = crate::munge_err_EMUNGE_TIMEOUT,
+    BadCred = crate::munge_err_EMUNGE_BAD_CRED,
+    BadVersion = crate::munge_err_EMUNGE_BAD_VERSION,
+    BadCipher = crate::munge_err_EMUNGE_BAD_CIPHER,
+    BadMac = crate::munge_err_EMUNGE_BAD_MAC,
+    BadZip = crate::munge_err_EMUNGE_BAD_ZIP,
+    BadRealm = crate::munge_err_EMUNGE_BAD_REALM,
+    CredInvalid = crate::munge_err_EMUNGE_CRED_INVALID,
+    CredExpired = crate::munge_err_EMUNGE_CRED_EXPIRED,
+    CredRewound = crate::munge_err_EMUNGE_CRED_REWOUND,
+    CredReplayed = crate::munge_err_EMUNGE_CRED_REPLAYED,
+    CredUnauthorized = crate::munge_err_EMUNGE_CRED_UNAUTHORIZED,
+    Success = crate::munge_err_EMUNGE_SUCCESS,
 }
 
 impl MungeError {
-    pub fn to_u32(self) -> u32 {
-        match self {
-            MungeError::Snafu => crate::munge_err_EMUNGE_SNAFU,
-            MungeError::BadArg => crate::munge_err_EMUNGE_BAD_ARG,
-            MungeError::BadLength => crate::munge_err_EMUNGE_BAD_LENGTH,
-            MungeError::Overflow => crate::munge_err_EMUNGE_OVERFLOW,
-            MungeError::NoMemory => crate::munge_err_EMUNGE_NO_MEMORY,
-            MungeError::Socket => crate::munge_err_EMUNGE_SOCKET,
-            MungeError::Timeout => crate::munge_err_EMUNGE_TIMEOUT,
-            MungeError::BadCred => crate::munge_err_EMUNGE_BAD_CRED,
-            MungeError::BadVersion => crate::munge_err_EMUNGE_BAD_VERSION,
-            MungeError::BadCipher => crate::munge_err_EMUNGE_BAD_CIPHER,
-            MungeError::BadMac => crate::munge_err_EMUNGE_BAD_MAC,
-            MungeError::BadZip => crate::munge_err_EMUNGE_BAD_ZIP,
-            MungeError::BadRealm => crate::munge_err_EMUNGE_BAD_REALM,
-            MungeError::CredInvalid => crate::munge_err_EMUNGE_CRED_INVALID,
-            MungeError::CredExpired => crate::munge_err_EMUNGE_CRED_EXPIRED,
-            MungeError::CredRewound => crate::munge_err_EMUNGE_CRED_REWOUND,
-            MungeError::CredReplayed => crate::munge_err_EMUNGE_CRED_REPLAYED,
-            MungeError::CredUnauthorized => crate::munge_err_EMUNGE_CRED_UNAUTHORIZED,
-            MungeError::Success => crate::munge_err_EMUNGE_SUCCESS,
-        }
-    }
-
     pub fn from_u32(err: u32) -> MungeError {
         match err {
             crate::munge_err_EMUNGE_SNAFU => MungeError::Snafu,
@@ -103,4 +65,45 @@ impl MungeError {
             _ => MungeError::BadArg,
         }
     }
+}
+
+// MUNGE symmetric cipher types
+#[repr(u32)]
+pub enum MungeCipher {
+    None = crate::munge_cipher_MUNGE_CIPHER_NONE,
+    Default = crate::munge_cipher_MUNGE_CIPHER_DEFAULT,
+    Blowfish = crate::munge_cipher_MUNGE_CIPHER_BLOWFISH,
+    Cast5 = crate::munge_cipher_MUNGE_CIPHER_CAST5,
+    Aes128 = crate::munge_cipher_MUNGE_CIPHER_AES128,
+    Aes256 = crate::munge_cipher_MUNGE_CIPHER_AES256,
+
+    //???
+    LastItem,
+}
+
+// MUNGE message authentication code types
+#[repr(u32)]
+pub enum MungeMac {
+    None = crate::munge_mac_MUNGE_MAC_NONE,
+    Default = crate::munge_mac_MUNGE_MAC_DEFAULT,
+    MD5 = crate::munge_mac_MUNGE_MAC_MD5,
+    SHA1 = crate::munge_mac_MUNGE_MAC_SHA1,
+    RIPEMD160 = crate::munge_mac_MUNGE_MAC_RIPEMD160,
+    SHA256 = crate::munge_mac_MUNGE_MAC_SHA256,
+    SHA512 = crate::munge_mac_MUNGE_MAC_SHA512,
+
+    //???
+    LastItem,
+}
+
+// MUNGE compression types
+#[repr(u32)]
+pub enum MungeZip {
+    None = crate::munge_zip_MUNGE_ZIP_NONE,
+    Default = crate::munge_zip_MUNGE_ZIP_DEFAULT,
+    Bzlib = crate::munge_zip_MUNGE_ZIP_BZLIB,
+    Zlib = crate::munge_zip_MUNGE_ZIP_ZLIB,
+
+    //???
+    LastItem,
 }
