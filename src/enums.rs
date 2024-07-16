@@ -1,6 +1,8 @@
 use std::fmt::Debug;
 
+/// Represents MUNGE context options
 #[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeOption {
     CIPHER_TYPE = crate::munge_opt_MUNGE_OPT_CIPHER_TYPE,
     MAC_TYPE = crate::munge_opt_MUNGE_OPT_MAC_TYPE,
@@ -36,7 +38,7 @@ pub enum MungeError {
     CredRewound = crate::munge_err_EMUNGE_CRED_REWOUND,
     CredReplayed = crate::munge_err_EMUNGE_CRED_REPLAYED,
     CredUnauthorized = crate::munge_err_EMUNGE_CRED_UNAUTHORIZED,
-    Success = crate::munge_err_EMUNGE_SUCCESS,
+    // Success = crate::munge_err_EMUNGE_SUCCESS,
 }
 
 impl MungeError {
@@ -60,15 +62,15 @@ impl MungeError {
             crate::munge_err_EMUNGE_CRED_REWOUND => MungeError::CredRewound,
             crate::munge_err_EMUNGE_CRED_REPLAYED => MungeError::CredReplayed,
             crate::munge_err_EMUNGE_CRED_UNAUTHORIZED => MungeError::CredUnauthorized,
-            crate::munge_err_EMUNGE_SUCCESS => MungeError::Success,
-
+            // crate::munge_err_EMUNGE_SUCCESS => MungeError::Success,
             _ => MungeError::BadArg,
         }
     }
 }
 
-// MUNGE symmetric cipher types
+/// MUNGE symmetric cipher types
 #[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeCipher {
     None = crate::munge_cipher_MUNGE_CIPHER_NONE,
     Default = crate::munge_cipher_MUNGE_CIPHER_DEFAULT,
@@ -77,12 +79,13 @@ pub enum MungeCipher {
     Aes128 = crate::munge_cipher_MUNGE_CIPHER_AES128,
     Aes256 = crate::munge_cipher_MUNGE_CIPHER_AES256,
 
-    //???
+    /// [`MungeCipher::LastItem`] ???
     LastItem,
 }
 
-// MUNGE message authentication code types
+/// MUNGE message authentication code types
 #[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeMac {
     None = crate::munge_mac_MUNGE_MAC_NONE,
     Default = crate::munge_mac_MUNGE_MAC_DEFAULT,
@@ -96,8 +99,9 @@ pub enum MungeMac {
     LastItem,
 }
 
-// MUNGE compression types
+/// MUNGE compression types
 #[repr(u32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeZip {
     None = crate::munge_zip_MUNGE_ZIP_NONE,
     Default = crate::munge_zip_MUNGE_ZIP_DEFAULT,
