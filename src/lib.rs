@@ -7,6 +7,7 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 pub mod credential;
 pub mod ctx;
 pub mod enums;
+pub mod munge;
 
 // C prototype: `munge_err_t munge_encode(char **cred, munge_ctx_t ctx, const void *buf, int len);`
 // pub fn encode(payload: Option<&'_ [u8]>) -> Result<String, error::MungeError> {
@@ -45,6 +46,7 @@ mod libTests {
             "{:?}",
             enums::MungeError::from_u32(_err)
         );
+        println!("Roundtrip Credential {:?}", &cred);
 
         let cred_value: *const c_char = unsafe { *cred };
 
@@ -79,8 +81,10 @@ mod libTests {
         //     panic!("Failed to create munge context!");
         // }
         let mut _err: u32 = 42;
+        let mut _set_err: u32 = 69;
+        let mut _err_desc: &str = "";
         unsafe {
-            munge_ctx_set(
+            _set_err = munge_ctx_set(
                 ctx,
                 munge_opt_MUNGE_OPT_SOCKET as i32,
                 "/usr/local/var/run/munge/munge.socket.2",
@@ -93,5 +97,6 @@ mod libTests {
             "{:?}",
             enums::MungeError::from_u32(_err)
         );
+        println!("Encode credential: {:?}", cred);
     }
 }
