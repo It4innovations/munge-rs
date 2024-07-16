@@ -3,7 +3,11 @@ use std::{
     ptr,
 };
 
-use crate::{credential::Credential, ctx, enums::MungeError};
+use crate::{
+    credential::Credential,
+    ctx,
+    enums::{self, Error, MungeError},
+};
 
 //TODO: Returns encoded credential. Takes optional context and optional payload.
 //
@@ -45,9 +49,14 @@ pub fn encode(msg: &str, ctx: Option<ctx::Context>) -> Result<String, MungeError
     }
 }
 
-//TODO: Returns decoded credential and any included payload.
-pub fn decode(encoded_msg: String) -> Result<Credential, MungeError> {
-    let cred: *mut ffi::c_char = CString::new(encoded_msg).unwrap().into_raw();
+/// Decodes the provided base64 encoded string.  
+/// Returns a [`Credential`]
+///
+/// # Errors
+///
+/// TODO:
+pub fn decode(encoded_msg: String) -> Result<Credential, enums::Error> {
+    let cred: *mut ffi::c_char = CString::new(encoded_msg)?.into_raw();
     let mut dmsg: *mut ffi::c_void = ptr::null_mut();
     let mut len: ffi::c_int = 0;
     let mut uid: crate::uid_t = 0;
@@ -64,12 +73,11 @@ pub fn decode(encoded_msg: String) -> Result<Credential, MungeError> {
         )
     };
     if err != 0 {
-        Err(MungeError::from_u32(err))
+        Err(MungeError::from_u32(err).into())
     } else {
         let resp: String = if !dmsg.is_null() {
             unsafe { CStr::from_ptr(dmsg as *const i8) }
-                .to_str()
-                .unwrap()
+                .to_str()?
                 .to_string()
         } else {
             "".to_string()
