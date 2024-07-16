@@ -46,15 +46,51 @@ pub fn encode(msg: &str, ctx: Option<ctx::Context>) -> Result<String, MungeError
 }
 
 //TODO: Returns decoded credential and any included payload.
-pub fn decode() -> Result<Credential, MungeError> {
-    todo!()
+pub fn decode(encoded_msg: String) -> Result<Credential, MungeError> {
+    let cred: *mut ffi::c_char = CString::new(encoded_msg).unwrap().into_raw();
+    let mut dmsg: *mut ffi::c_void = ptr::null_mut();
+    let mut len: ffi::c_int = 0;
+    let mut uid: crate::uid_t = 0;
+    let mut gid: crate::gid_t = 0;
+
+    let err = unsafe {
+        crate::munge_decode(
+            cred,
+            ptr::null_mut(),
+            &mut dmsg,
+            &mut len,
+            &mut uid,
+            &mut gid,
+        )
+    };
+    if err != 0 {
+        Err(MungeError::from_u32(err))
+    } else {
+        let resp: String = if !dmsg.is_null() {
+            unsafe { CStr::from_ptr(dmsg as *const i8) }
+                .to_str()
+                .unwrap()
+                .to_string()
+        } else {
+            "".to_string()
+        };
+        unsafe { libc::free(dmsg) };
+        Ok(Credential {
+            message: resp,
+            uid,
+            gid,
+        })
+    }
 }
 
 #[cfg(test)]
 mod munge_tests {
     use std::path::PathBuf;
 
-    use crate::{ctx::Context, munge};
+    use crate::{
+        ctx::Context,
+        munge::{self},
+    };
 
     #[test]
     fn encode_test() {
@@ -68,5 +104,13 @@ mod munge_tests {
             .unwrap();
         let cred = munge::encode("Hello World!", Some(ctx)).expect("Failed to encode");
         println!("Cred with context: {:?}", cred);
+    }
+
+    #[test]
+    fn encode_decode() {
+        let cred = munge::encode("Goodbye cruel world...", None).expect("Failed to encode");
+
+        let res = munge::decode(cred).expect("Failed to decode");
+        println!("Result: {:?}", res);
     }
 }
