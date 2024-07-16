@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::enums::{self, MungeError, MungeMac, MungeOption, MungeZip};
+use crate::enums::{MungeError, MungeMac, MungeOption, MungeZip};
 
 pub struct Context {
     ctx: *mut crate::munge_ctx,
@@ -21,7 +21,19 @@ impl Context {
         self.socket = path;
         let mut _err = 42;
         _err = unsafe { crate::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, &self.socket) };
-        if MungeError::from_u32(_err) != MungeError::Success {
+        if _err != 0 {
+            Err(MungeError::from_u32(_err))
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Sets an option that takes a number as a value in `munge_ctx`
+    // TEST:
+    pub fn set_ctx_opt(&self, option: MungeOption, value: u32) -> Result<(), MungeError> {
+        let mut _err = 42;
+        _err = unsafe { crate::munge_ctx_set(self.ctx, option as i32, value) };
+        if _err != 0 {
             Err(MungeError::from_u32(_err))
         } else {
             Ok(())
@@ -32,7 +44,7 @@ impl Context {
     pub fn set_mac_type(&self, macType: MungeMac) -> Result<(), MungeError> {
         let mut _err = 42;
         _err = unsafe { crate::munge_ctx_set(self.ctx, MungeOption::MAC_TYPE as i32, macType) };
-        if MungeError::from_u32(_err) != MungeError::Success {
+        if _err != 0 {
             Err(MungeError::from_u32(_err))
         } else {
             Ok(())
@@ -40,11 +52,25 @@ impl Context {
     }
 
     /// Sets the compression type of this [`Context`]
-    pub fn set_zip_type(&self, zipType: MungeZip) {
-        todo!()
+    // TEST:
+    pub fn set_zip_type(&self, zipType: MungeZip) -> Result<(), MungeError> {
+        let mut _err = 42;
+        _err =
+            unsafe { crate::munge_ctx_set(self.ctx, MungeOption::ZIP_TYPE as i32, zipType as i32) };
+        if _err != 0 {
+            Err(MungeError::from_u32(_err))
+        } else {
+            Ok(())
+        }
     }
 
     //TODO: Other setters
+}
+
+impl Default for Context {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Drop for Context {
@@ -55,7 +81,10 @@ impl Drop for Context {
 
 #[cfg(test)]
 mod contextTests {
-    use crate::{ctx::Context, enums::MungeMac};
+    use crate::{
+        ctx::{self, Context},
+        enums::{MungeCipher, MungeMac, MungeOption, MungeZip},
+    };
     use std::path::PathBuf;
 
     #[test]
@@ -65,6 +94,21 @@ mod contextTests {
             .set_socket(PathBuf::from("/usr/local/var/run/munge/munge.socket.2"))
             .is_ok());
         assert!(!ctx.ctx.is_null())
+    }
+
+    #[test]
+    fn set_ctx_opt() {
+        let ctx = Context::new();
+        assert!(ctx
+            .set_ctx_opt(MungeOption::ZIP_TYPE, MungeZip::Bzlib as u32)
+            .is_ok());
+        assert!(ctx
+            .set_ctx_opt(MungeOption::MAC_TYPE, MungeMac::SHA256 as u32)
+            .is_ok());
+        assert!(ctx
+            .set_ctx_opt(MungeOption::CIPHER_TYPE, MungeCipher::Aes256 as u32)
+            .is_ok());
+        assert!(ctx.set_ctx_opt(MungeOption::TTL, 180).is_ok());
     }
 
     #[test]
