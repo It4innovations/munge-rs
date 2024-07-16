@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{ffi::CString, path::PathBuf};
 
 use crate::enums::{MungeError, MungeMac, MungeOption, MungeZip};
 
@@ -16,11 +16,22 @@ impl Context {
         }
     }
 
+    pub fn context(&self) -> *mut crate::munge_ctx {
+        self.ctx
+    }
+
     /// Sets the path to the daemons socket of this [`Context`].
     pub fn set_socket(&mut self, path: PathBuf) -> Result<(), MungeError> {
         self.socket = path;
         let mut _err = 42;
-        _err = unsafe { crate::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, &self.socket) };
+
+        let c_path = CString::new(
+            self.socket
+                .to_str()
+                .expect("Failed to convert path into `&str`"),
+        );
+
+        _err = unsafe { crate::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, c_path.unwrap()) };
         if _err != 0 {
             Err(MungeError::from_u32(_err))
         } else {
@@ -82,7 +93,7 @@ impl Drop for Context {
 #[cfg(test)]
 mod contextTests {
     use crate::{
-        ctx::{self, Context},
+        ctx::Context,
         enums::{MungeCipher, MungeMac, MungeOption, MungeZip},
     };
     use std::path::PathBuf;
