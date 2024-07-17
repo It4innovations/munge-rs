@@ -1,6 +1,6 @@
 use std::{ffi::CString, path::PathBuf};
 
-use crate::enums::{self, MungeError, MungeMac, MungeOption, MungeZip};
+use crate::enums::{self, MungeError, MungeOption};
 
 pub struct Context {
     pub(crate) ctx: *mut crate::ffi::munge_ctx,
