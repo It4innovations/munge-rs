@@ -38,13 +38,12 @@ pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Er
     let len: ffi::c_int = msg.len() as i32;
     let buf: *const ffi::c_void = CString::new(msg)?.into_raw() as *const ffi::c_void;
 
-    let err: u32;
-
-    if let Some(ctx) = ctx {
-        err = unsafe { c::munge_encode(&mut cred, ctx.ctx, buf, len) };
+    let err: u32 = if let Some(ctx) = ctx {
+        unsafe { c::munge_encode(&mut cred, ctx.ctx, buf, len) }
     } else {
-        err = unsafe { c::munge_encode(&mut cred, ptr::null_mut(), buf, len) };
-    }
+        unsafe { c::munge_encode(&mut cred, ptr::null_mut(), buf, len) }
+    };
+
     if err != 0 {
         Err(MungeError::from_u32(err).into())
     } else {
@@ -69,23 +68,21 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
     let mut uid: c::uid_t = 0;
     let mut gid: c::gid_t = 0;
 
-    let err: u32;
-    if let Some(ctx) = ctx {
-        unsafe {
-            err = c::munge_decode(cred, ctx.ctx, &mut dmsg, &mut len, &mut uid, &mut gid);
-        }
+    let err: u32 = if let Some(ctx) = ctx {
+        unsafe { c::munge_decode(cred, ctx.ctx, &mut dmsg, &mut len, &mut uid, &mut gid) }
     } else {
         unsafe {
-            err = c::munge_decode(
+            c::munge_decode(
                 cred,
                 ptr::null_mut(),
                 &mut dmsg,
                 &mut len,
                 &mut uid,
                 &mut gid,
-            );
+            )
         }
-    }
+    };
+
     if err != 0 {
         Err(MungeError::from_u32(err).into())
     } else {
