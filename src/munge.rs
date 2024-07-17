@@ -41,7 +41,7 @@ pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Er
     let err: u32;
 
     if let Some(ctx) = ctx {
-        err = unsafe { c::munge_encode(&mut cred, ctx.context(), buf, len) };
+        err = unsafe { c::munge_encode(&mut cred, ctx.ctx, buf, len) };
     } else {
         err = unsafe { c::munge_encode(&mut cred, ptr::null_mut(), buf, len) };
     }
@@ -72,7 +72,7 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
     let err: u32;
     if let Some(ctx) = ctx {
         unsafe {
-            err = c::munge_decode(cred, ctx.context(), &mut dmsg, &mut len, &mut uid, &mut gid);
+            err = c::munge_decode(cred, ctx.ctx, &mut dmsg, &mut len, &mut uid, &mut gid);
         }
     } else {
         unsafe {
