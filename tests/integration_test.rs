@@ -67,8 +67,10 @@ fn munge_encode_w_ctx() {
         .expect("Failed to set the socket path.");
 
     ctx.set_ctx_opt(enums::MungeOption::TTL, 1024).unwrap();
+    ctx.set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Bzlib as u32)
+        .unwrap();
 
-    let out = munge::encode(test_json, Some(ctx)).unwrap();
+    let out = munge::encode(test_json, Some(&ctx)).unwrap();
     println!("Encoded credential with custom context: \n\t{}\n", out);
 }
 
@@ -102,8 +104,11 @@ fn munge_encode_decode() {
     let mut ctx = munge_rs::ctx::Context::new();
     ctx.set_socket(PathBuf::from("/usr/local/var/run/munge/munge.socket.2"))
         .unwrap();
-    let encoded = munge::encode(test_json, Some(ctx)).unwrap();
+    ctx.set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Bzlib as u32)
+        .unwrap();
 
-    let decoded = munge::decode(encoded).unwrap();
+    let encoded = munge::encode(test_json, Some(&ctx)).unwrap();
+
+    let decoded = munge::decode(encoded, Some(&ctx)).unwrap();
     println!("\nDecoded credential info: \n\t{:?}", decoded);
 }

@@ -33,7 +33,7 @@ use ctx::Context;
 /// # Errors
 ///
 /// TODO:
-pub fn encode(msg: &str, ctx: Option<ctx::Context>) -> Result<String, enums::Error> {
+pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Error> {
     let mut cred: *mut ffi::c_char = ptr::null_mut();
     let len: ffi::c_int = msg.len() as i32;
     let buf: *const ffi::c_void = CString::new(msg)?.into_raw() as *const ffi::c_void;
@@ -61,24 +61,31 @@ pub fn encode(msg: &str, ctx: Option<ctx::Context>) -> Result<String, enums::Err
 ///
 /// # Errors
 ///
-/// TODO:
-pub fn decode(encoded_msg: String) -> Result<Credential, enums::Error> {
+/// TODO: Add context to decode
+pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, enums::Error> {
     let cred: *mut ffi::c_char = CString::new(encoded_msg)?.into_raw();
     let mut dmsg: *mut ffi::c_void = ptr::null_mut();
     let mut len: ffi::c_int = 0;
     let mut uid: c::uid_t = 0;
     let mut gid: c::gid_t = 0;
 
-    let err = unsafe {
-        c::munge_decode(
-            cred,
-            ptr::null_mut(),
-            &mut dmsg,
-            &mut len,
-            &mut uid,
-            &mut gid,
-        )
-    };
+    let err: u32;
+    if let Some(ctx) = ctx {
+        unsafe {
+            err = c::munge_decode(cred, ctx.context(), &mut dmsg, &mut len, &mut uid, &mut gid);
+        }
+    } else {
+        unsafe {
+            err = c::munge_decode(
+                cred,
+                ptr::null_mut(),
+                &mut dmsg,
+                &mut len,
+                &mut uid,
+                &mut gid,
+            );
+        }
+    }
     if err != 0 {
         Err(MungeError::from_u32(err).into())
     } else {
@@ -117,7 +124,7 @@ mod munge_tests {
         let mut ctx = Context::new();
         ctx.set_socket(PathBuf::from("/usr/local/var/run/munge/munge.socket.2"))
             .unwrap();
-        let cred = munge::encode("Hello World!", Some(ctx)).expect("Failed to encode");
+        let cred = munge::encode("Hello World!", Some(&ctx)).expect("Failed to encode");
         println!("Cred with context: {:?}", cred);
     }
 
@@ -125,7 +132,7 @@ mod munge_tests {
     fn encode_decode() {
         let cred = munge::encode("Goodbye cruel world...", None).expect("Failed to encode");
 
-        let res = munge::decode(cred).expect("Failed to decode");
+        let res = munge::decode(cred, None).expect("Failed to decode");
         println!("Result: {:?}", res);
     }
 }
