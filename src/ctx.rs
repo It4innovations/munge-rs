@@ -1,9 +1,9 @@
 use std::{ffi::CString, path::PathBuf};
 
-use crate::enums::{MungeError, MungeMac, MungeOption, MungeZip};
+use crate::enums::{self, MungeError, MungeMac, MungeOption, MungeZip};
 
 pub struct Context {
-    ctx: *mut crate::munge_ctx,
+    ctx: *mut crate::ffi::munge_ctx,
 
     pub socket: PathBuf,
 }
@@ -11,29 +11,31 @@ pub struct Context {
 impl Context {
     pub fn new() -> Self {
         Context {
-            ctx: unsafe { crate::munge_ctx_create() },
+            ctx: unsafe { crate::ffi::munge_ctx_create() },
             socket: PathBuf::new(),
         }
     }
 
-    pub fn context(&self) -> *mut crate::munge_ctx {
+    pub fn context(&self) -> *mut crate::ffi::munge_ctx {
         self.ctx
     }
 
     /// Sets the path to the daemons socket of this [`Context`].
-    pub fn set_socket(&mut self, path: PathBuf) -> Result<(), MungeError> {
+    /// TODO: Return Self or Error ie. builder pattern
+    pub fn set_socket(&mut self, path: PathBuf) -> Result<(), enums::Error> {
         self.socket = path;
         let mut _err = 42;
 
+        // TODO: verify the string
         let c_path = CString::new(
             self.socket
                 .to_str()
                 .expect("Failed to convert path into `&str`"),
-        );
+        )?;
 
-        _err = unsafe { crate::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, c_path.unwrap()) };
+        _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, c_path) };
         if _err != 0 {
-            Err(MungeError::from_u32(_err))
+            Err(MungeError::from_u32(_err).into())
         } else {
             Ok(())
         }
@@ -43,7 +45,7 @@ impl Context {
     // TEST:
     pub fn set_ctx_opt(&self, option: MungeOption, value: u32) -> Result<(), MungeError> {
         let mut _err = 42;
-        _err = unsafe { crate::munge_ctx_set(self.ctx, option as i32, value) };
+        _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, option as i32, value) };
         if _err != 0 {
             Err(MungeError::from_u32(_err))
         } else {
@@ -54,7 +56,8 @@ impl Context {
     /// Sets the message auth code type of this [`Context`]
     pub fn set_mac_type(&self, macType: MungeMac) -> Result<(), MungeError> {
         let mut _err = 42;
-        _err = unsafe { crate::munge_ctx_set(self.ctx, MungeOption::MAC_TYPE as i32, macType) };
+        _err =
+            unsafe { crate::ffi::munge_ctx_set(self.ctx, MungeOption::MAC_TYPE as i32, macType) };
         if _err != 0 {
             Err(MungeError::from_u32(_err))
         } else {
@@ -66,8 +69,9 @@ impl Context {
     // TEST:
     pub fn set_zip_type(&self, zipType: MungeZip) -> Result<(), MungeError> {
         let mut _err = 42;
-        _err =
-            unsafe { crate::munge_ctx_set(self.ctx, MungeOption::ZIP_TYPE as i32, zipType as i32) };
+        _err = unsafe {
+            crate::ffi::munge_ctx_set(self.ctx, MungeOption::ZIP_TYPE as i32, zipType as i32)
+        };
         if _err != 0 {
             Err(MungeError::from_u32(_err))
         } else {
@@ -86,7 +90,7 @@ impl Default for Context {
 
 impl Drop for Context {
     fn drop(&mut self) {
-        unsafe { crate::munge_ctx_destroy(self.ctx) };
+        unsafe { crate::ffi::munge_ctx_destroy(self.ctx) };
     }
 }
 
@@ -145,7 +149,7 @@ mod contextTests {
     //
     //     let get_err: MungeError;
     //     unsafe {
-    //         get_err = MungeError::from_u32(crate::munge_ctx_get(
+    //         get_err = MungeError::from_u32(crate::ffi::munge_ctx_get(
     //             ctx.ctx,
     //             enums::MungeOption::SOCKET.to_u32() as i32,
     //             &mut path,
