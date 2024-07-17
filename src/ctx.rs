@@ -3,7 +3,7 @@ use std::{ffi::CString, path::PathBuf};
 use crate::enums::{self, MungeError, MungeMac, MungeOption, MungeZip};
 
 pub struct Context {
-    ctx: *mut crate::ffi::munge_ctx,
+    pub(crate) ctx: *mut crate::ffi::munge_ctx,
 
     pub socket: PathBuf,
 }
@@ -14,10 +14,6 @@ impl Context {
             ctx: unsafe { crate::ffi::munge_ctx_create() },
             socket: PathBuf::new(),
         }
-    }
-
-    pub fn context(&self) -> *mut crate::ffi::munge_ctx {
-        self.ctx
     }
 
     /// Sets the path to the daemons socket of this [`Context`].
@@ -42,7 +38,6 @@ impl Context {
     }
 
     /// Sets an option that takes a number as a value in `munge_ctx`
-    // TEST:
     pub fn set_ctx_opt(&self, option: MungeOption, value: u32) -> Result<(), MungeError> {
         let mut _err = 42;
         _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, option as i32, value) };
@@ -66,7 +61,6 @@ impl Context {
     }
 
     /// Sets the compression type of this [`Context`]
-    // TEST:
     pub fn set_zip_type(&self, zipType: MungeZip) -> Result<(), MungeError> {
         let mut _err = 42;
         _err = unsafe {
@@ -78,8 +72,6 @@ impl Context {
             Ok(())
         }
     }
-
-    //TODO: Other setters
 }
 
 impl Default for Context {
