@@ -22,12 +22,7 @@ impl Context {
         self.socket = path;
         let mut _err = 42;
 
-        // TODO: verify the string
-        let c_path = CString::new(
-            self.socket
-                .to_str()
-                .expect("Failed to convert path into `&str`"),
-        )?;
+        let c_path = CString::new(self.socket.to_str().ok_or(enums::Error::InvalidUtf8)?)?;
 
         _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, c_path) };
         if _err != 0 {
@@ -48,35 +43,8 @@ impl Context {
         }
     }
 
-    /// Sets the message auth code type of this [`Context`]
-    pub fn set_mac_type(&self, macType: MungeMac) -> Result<(), MungeError> {
-        let mut _err = 42;
-        _err =
-            unsafe { crate::ffi::munge_ctx_set(self.ctx, MungeOption::MAC_TYPE as i32, macType) };
-        if _err != 0 {
-            Err(MungeError::from_u32(_err))
-        } else {
-            Ok(())
-        }
-    }
-
-    /// Sets the compression type of this [`Context`]
-    pub fn set_zip_type(&self, zipType: MungeZip) -> Result<(), MungeError> {
-        let mut _err = 42;
-        _err = unsafe {
-            crate::ffi::munge_ctx_set(self.ctx, MungeOption::ZIP_TYPE as i32, zipType as i32)
-        };
-        if _err != 0 {
-            Err(MungeError::from_u32(_err))
-        } else {
-            Ok(())
-        }
-    }
-}
-
-impl Default for Context {
-    fn default() -> Self {
-        Self::new()
+    pub fn get_socket(&mut self) {
+        todo!()
     }
 }
 
@@ -116,18 +84,6 @@ mod contextTests {
             .set_ctx_opt(MungeOption::CIPHER_TYPE, MungeCipher::Aes256 as u32)
             .is_ok());
         assert!(ctx.set_ctx_opt(MungeOption::TTL, 180).is_ok());
-    }
-
-    #[test]
-    fn set_mac_type() {
-        let ctx = Context::new();
-        assert!(ctx.set_mac_type(MungeMac::MD5).is_ok());
-        assert!(ctx.set_mac_type(MungeMac::None).is_ok());
-        assert!(ctx.set_mac_type(MungeMac::SHA1).is_ok());
-        assert!(ctx.set_mac_type(MungeMac::SHA256).is_ok());
-        assert!(ctx.set_mac_type(MungeMac::SHA512).is_ok());
-        assert!(ctx.set_mac_type(MungeMac::RIPEMD160).is_ok());
-        assert!(ctx.set_mac_type(MungeMac::Default).is_ok());
     }
 
     // Do we need `munge_ctx_get()`?
