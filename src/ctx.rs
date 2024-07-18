@@ -6,6 +6,16 @@ use std::{
 
 use crate::enums::{self, MungeError, MungeOption};
 
+/// Represents a context used for managing options and settings.
+///
+/// This struct is used to configure and interact with various options.
+///
+/// # Examples
+///
+/// ```ignore
+/// let mut ctx = Context::new(); // Hypothetical function to create a new context
+/// // ...use ctx to set or get options
+/// ```
 pub struct Context {
     pub(crate) ctx: *mut crate::ffi::munge_ctx,
 }
@@ -17,7 +27,31 @@ impl Context {
         }
     }
 
-    /// Sets the path to the daemons socket of this [`Context`].
+    /// Sets the socket path in the context to the given `PathBuf`.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The `PathBuf` specifying the socket path to set.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `enums::Error` if:
+    /// - The path cannot be converted to a UTF-8 string.
+    /// - The function call to `munge_ctx_set` fails.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns a mutable reference to `self` for method chaining.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = /* initialize your context here */;
+    /// match ctx.set_socket(PathBuf::from("/path/to/socket")) {
+    ///     Ok(ctx) => println!("Socket path set successfully"),
+    ///     Err(e) => eprintln!("Failed to set socket path: {:?}", e),
+    /// }
+    /// ```
     pub fn set_socket(&mut self, path: PathBuf) -> Result<&mut Self, enums::Error> {
         let socket = path;
 
@@ -33,7 +67,30 @@ impl Context {
         }
     }
 
-    /// Sets an option that takes a number as a value in `munge_ctx`
+    /// Sets the specified context option to the given value.
+    ///
+    /// # Arguments
+    ///
+    /// * `option` - The `MungeOption` to set.
+    /// * `value` - The value to set for the specified option.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `MungeError` if the function call to `munge_ctx_set` fails.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns a mutable reference to `self` for method chaining.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = /* initialize your context here */;
+    /// match ctx.set_ctx_opt(MungeOption::SOME_OPTION, value) {
+    ///     Ok(ctx) => println!("Option set successfully"),
+    ///     Err(e) => eprintln!("Failed to set option value: {:?}", e),
+    /// }
+    /// ```
     pub fn set_ctx_opt(
         &mut self,
         option: MungeOption,
@@ -47,12 +104,22 @@ impl Context {
         }
     }
 
-    /// Returns the get socket of this [`Context`].
+    /// Retrieves the socket path from the context and returns it as a `PathBuf`.
     ///
     /// # Errors
     ///
-    /// This function will return an error if .
-    // TODO: Getters
+    /// Returns an `enums::Error` if the function call to `munge_ctx_get` fails or
+    /// if the string conversion fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = /* initialize your context here */;
+    /// match ctx.get_socket() {
+    ///     Ok(path) => println!("Socket path: {:?}", path),
+    ///     Err(e) => eprintln!("Failed to get socket path: {:?}", e),
+    /// }
+    /// ```
     pub fn get_socket(&mut self) -> Result<PathBuf, enums::Error> {
         let mut c_path: *const ffi::c_char = ptr::null();
 
@@ -67,11 +134,25 @@ impl Context {
         }
     }
 
-    /// .
+    /// Retrieves the specified context option as an `i32`.
+    ///
+    /// # Arguments
+    ///
+    /// * `option` - The `MungeOption` to retrieve from the context.
     ///
     /// # Errors
     ///
-    /// This function will return an error if .
+    /// Returns an `enums::Error` if the function call to `munge_ctx_get` fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = /* initialize your context here */;
+    /// match ctx.get_ctx_opt(MungeOption::SOME_OPTION) {
+    ///     Ok(value) => println!("Option value: {}", value),
+    ///     Err(e) => eprintln!("Failed to get option value: {:?}", e),
+    /// }
+    /// ```
     pub fn get_ctx_opt(&self, option: MungeOption) -> Result<i32, enums::Error> {
         let mut value: i32 = 42;
 
