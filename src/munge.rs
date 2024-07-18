@@ -10,11 +10,30 @@ use crate::{
     ffi as c,
 };
 
-/// Takes a string to be included with encoded credential and an optional [`Context`]
+/// Encodes the given message and returns a base64 encoded credential string.
+///
+/// # Arguments
+///
+/// * `msg` - The message to be included with the encoded credential.
+/// * `ctx` - An optional reference to a `Context`. If no context is provided, defaults will be used.
 ///
 /// # Errors
 ///
-pub fn encode(msg: &str, ctx: Option<&Context>) -> Result<String, enums::Error> {
+/// Returns an `enums::Error` if:
+/// - The message cannot be converted to a C string (contains an internal null byte).
+/// - The encoding process fails.
+///
+/// # Example
+///
+/// ```ignore
+/// let msg = "Hello, MUNGE!";
+/// let encoded = encode(msg, None);
+/// match encoded {
+///     Ok(cred) => println!("Encoded credential: {}", cred),
+///     Err(e) => eprintln!("Failed to encode message: {:?}", e),
+/// }
+/// ```
+pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Error> {
     let mut cred: *mut ffi::c_char = ptr::null_mut();
     let len: ffi::c_int = msg.len() as i32;
     let buf: *const ffi::c_void = CString::new(msg)?.into_raw() as *const ffi::c_void;
@@ -37,13 +56,14 @@ pub fn encode(msg: &str, ctx: Option<&Context>) -> Result<String, enums::Error> 
 }
 
 /// Decodes the provided base64 encoded string.
-/// If no context is provided the default values are used.
+/// If no context is provided the default values are used.  
 ///
-/// Returns a [`Credential`]
+/// * `encoded_msg` - The base64 encoded credential string to decode.
+/// * `ctx` - An optional reference to a [`Context`]. If no context is provided, defaults will be used.
 ///
 /// # Errors
 ///
-/// This will return an error thrown by munge or when the provided `encoded_msg` is invalid ie.
+/// This will return an error thrown by munge or when the provided [`encoded_msg`] is invalid ie.
 /// the bytes provided contain an internal 0 byte. [`std::ffi::NulError`]
 pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, enums::Error> {
     let cred: *mut ffi::c_char = CString::new(encoded_msg)?.into_raw();

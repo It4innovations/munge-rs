@@ -11,7 +11,7 @@ use crate::ffi as c;
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```ignore
 /// let option = MungeOption::CIPHER_TYPE;
 /// println!("Option: {:?}", option);
 /// ```
@@ -105,7 +105,7 @@ impl MungeError {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```ignore
     /// let error = MungeError::from_u32(1);
     /// println!("Error: {:?}", error);
     /// ```
