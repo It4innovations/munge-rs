@@ -16,23 +16,8 @@ use ctx::Context;
 
 /// Takes a string to be included with encoded credential and an optional [`Context`]
 ///
-/// INTERNALLY:  
-/// Creates a credential contained in a NUL-terminated base64 string.
-///   A payload specified by a buffer [buf] of length [len] can be
-///   encapsulated in as well.
-/// If the munge context [ctx] is NULL, the default context will be used.
-/// A pointer to the resulting credential is returned via [cred]; the caller
-///   is responsible for freeing this memory.
-/// Returns EMUNGE_SUCCESS if the credential is successfully created;
-///   o/w, sets [cred] to NULL and returns the munge error number.
-///   If a [ctx] was specified, it may contain a more detailed error
-///   message accessible via munge_ctx_strerror().
-///
-/// `munge_err_t munge_encode (char **cred, munge_ctx_t ctx, const void *buf, int len);`
-///
 /// # Errors
 ///
-/// TODO:
 pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Error> {
     let mut cred: *mut ffi::c_char = ptr::null_mut();
     let len: ffi::c_int = msg.len() as i32;
@@ -55,12 +40,15 @@ pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Er
     }
 }
 
-/// Decodes the provided base64 encoded string.  
+/// Decodes the provided base64 encoded string.
+/// If no context is provided the default values are used.  
+///
 /// Returns a [`Credential`]
 ///
 /// # Errors
 ///
-/// TODO: Add context to decode
+/// This will return an error thrown by munge or when the provided [`encoded_msg`] is invalid ie.
+/// the bytes provided contain an internal 0 byte. [`std::ffi::NulError`]
 pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, enums::Error> {
     let cred: *mut ffi::c_char = CString::new(encoded_msg)?.into_raw();
     let mut dmsg: *mut ffi::c_void = ptr::null_mut();
@@ -104,8 +92,6 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
 
 #[cfg(test)]
 mod munge_tests {
-    use std::path::PathBuf;
-
     use crate::{
         ctx::Context,
         munge::{self},
@@ -119,8 +105,8 @@ mod munge_tests {
     #[test]
     fn encode_test_w_ctx() {
         let mut ctx = Context::new();
-        ctx.set_socket(PathBuf::from("/usr/local/var/run/munge/munge.socket.2"))
-            .unwrap();
+        let socket = ctx.get_socket().expect("Failed to get socket.");
+        ctx.set_socket(socket).expect("Failed to set socket.");
         let cred = munge::encode("Hello World!", Some(&ctx)).expect("Failed to encode");
         println!("Cred with context: {:?}", cred);
     }

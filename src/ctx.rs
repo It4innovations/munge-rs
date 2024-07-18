@@ -1,30 +1,31 @@
-use std::{ffi::CString, path::PathBuf};
+use std::{
+    ffi::{self, CStr, CString},
+    path::{self, PathBuf},
+    ptr,
+};
 
 use crate::enums::{self, MungeError, MungeOption};
 
 pub struct Context {
     pub(crate) ctx: *mut crate::ffi::munge_ctx,
-
-    pub socket: PathBuf,
 }
 
 impl Context {
     pub fn new() -> Self {
         Context {
             ctx: unsafe { crate::ffi::munge_ctx_create() },
-            socket: PathBuf::new(),
         }
     }
 
     /// Sets the path to the daemons socket of this [`Context`].
-    /// TODO: Return Self or Error ie. builder pattern
     pub fn set_socket(&mut self, path: PathBuf) -> Result<(), enums::Error> {
-        self.socket = path;
-        let mut _err = 42;
+        let socket = path;
 
-        let c_path = CString::new(self.socket.to_str().ok_or(enums::Error::InvalidUtf8)?)?;
+        let c_path = CString::new(socket.to_str().ok_or(enums::Error::InvalidUtf8)?)?;
 
-        _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, c_path) };
+        let _err = unsafe {
+            crate::ffi::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, c_path.as_ptr())
+        };
         if _err != 0 {
             Err(MungeError::from_u32(_err).into())
         } else {
@@ -34,8 +35,7 @@ impl Context {
 
     /// Sets an option that takes a number as a value in `munge_ctx`
     pub fn set_ctx_opt(&self, option: MungeOption, value: u32) -> Result<(), MungeError> {
-        let mut _err = 42;
-        _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, option as i32, value) };
+        let _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, option as i32, value) };
         if _err != 0 {
             Err(MungeError::from_u32(_err))
         } else {
@@ -43,8 +43,41 @@ impl Context {
         }
     }
 
-    pub fn get_socket(&mut self) {
-        todo!()
+    /// Returns the get socket of this [`Context`].
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    // TODO: Getters
+    pub fn get_socket(&mut self) -> Result<PathBuf, enums::Error> {
+        let mut c_path: *const ffi::c_char = ptr::null();
+
+        let _err =
+            unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::SOCKET as i32, &mut c_path) };
+        let socket = unsafe { CStr::from_ptr(c_path) }.to_str()?.to_owned();
+
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
+        } else {
+            Ok(PathBuf::from(socket))
+        }
+    }
+
+    /// .
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if .
+    pub fn get_ctx_opt(&self, option: MungeOption) -> Result<i32, enums::Error> {
+        let mut value: i32 = 42;
+
+        let _err = unsafe { crate::ffi::munge_ctx_get(self.ctx, option as i32, &mut value) };
+
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
+        } else {
+            Ok(value)
+        }
     }
 }
 
@@ -61,6 +94,16 @@ mod contextTests {
         enums::{MungeCipher, MungeMac, MungeOption, MungeZip},
     };
     use std::path::PathBuf;
+
+    #[test]
+    fn getter_test() {
+        let mut ctx = Context::new();
+        let res = ctx.get_socket().unwrap();
+        let i = ctx.get_ctx_opt(MungeOption::TTL).unwrap();
+        println!("Result: {:?}", res);
+        println!("TTL: {}", i);
+        println!();
+    }
 
     #[test]
     fn create_ctx_with_socket() {
@@ -85,26 +128,4 @@ mod contextTests {
             .is_ok());
         assert!(ctx.set_ctx_opt(MungeOption::TTL, 180).is_ok());
     }
-
-    // Do we need `munge_ctx_get()`?
-    // #[test]
-    // fn get_munge_ctx_opt() {
-    //     let mut ctx = Context::new();
-    //     let err = ctx.set_socket(PathBuf::from("/usr/local/var/run/munge/munge.socket.2"));
-    //     assert_eq!(err, MungeError::Success);
-    //
-    //     let mut path: &str = "42";
-    //
-    //     let get_err: MungeError;
-    //     unsafe {
-    //         get_err = MungeError::from_u32(crate::ffi::munge_ctx_get(
-    //             ctx.ctx,
-    //             enums::MungeOption::SOCKET.to_u32() as i32,
-    //             &mut path,
-    //         ));
-    //     }
-    //
-    //     assert_eq!(get_err, MungeError::Success);
-    //     assert_eq!(path, "/usr/local/var/run/munge/munge.socket.2");
-    // }
 }

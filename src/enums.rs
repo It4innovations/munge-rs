@@ -3,11 +3,16 @@ use std::{
     ffi::NulError,
     fmt,
     str::Utf8Error,
+    string::FromUtf8Error,
 };
 
 use crate::ffi as c;
 
-/// Represents MUNGE context options
+/// Represents MUNGE context options.
+///
+/// This enum wraps various context options that can be used with MUNGE encoding and decoding operations.
+///
+/// Each variant represents a different option and maps to a corresponding constant in the MUNGE C library.
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeOption {
@@ -49,6 +54,7 @@ pub enum MungeError {
 }
 
 impl MungeError {
+    /// Returns a corresponding MungeError to it's `int` value
     pub fn from_u32(err: u32) -> MungeError {
         match err {
             c::munge_err_EMUNGE_SNAFU => MungeError::Snafu,
@@ -83,6 +89,15 @@ impl fmt::Display for MungeError {
     }
 }
 
+/// Represents different types of errors that can occur in the application.
+///
+/// This enum consolidates various error types into a single type for easy handling.
+///
+/// # Variants
+///
+/// - `MungeError`: An error related to MUNGE operations, wrapped in a [`MungeError`].
+/// - `InvalidUtf8`: An error indicating that a UTF-8 conversion failed.
+/// - `InnerNull`: An error indicating that an unexpected null value was encountered.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error {
     MungeError(MungeError),
@@ -106,6 +121,11 @@ impl From<MungeError> for Error {
 }
 impl From<Utf8Error> for Error {
     fn from(_value: Utf8Error) -> Self {
+        Error::InvalidUtf8
+    }
+}
+impl From<FromUtf8Error> for Error {
+    fn from(_value: FromUtf8Error) -> Self {
         Error::InvalidUtf8
     }
 }
@@ -141,9 +161,6 @@ pub enum MungeCipher {
     Cast5 = c::munge_cipher_MUNGE_CIPHER_CAST5,
     Aes128 = c::munge_cipher_MUNGE_CIPHER_AES128,
     Aes256 = c::munge_cipher_MUNGE_CIPHER_AES256,
-
-    /// [`MungeCipher::LastItem`] ???
-    LastItem,
 }
 
 /// MUNGE message authentication code types
@@ -157,9 +174,6 @@ pub enum MungeMac {
     RIPEMD160 = c::munge_mac_MUNGE_MAC_RIPEMD160,
     SHA256 = c::munge_mac_MUNGE_MAC_SHA256,
     SHA512 = c::munge_mac_MUNGE_MAC_SHA512,
-
-    //???
-    LastItem,
 }
 
 /// MUNGE compression types
@@ -170,7 +184,4 @@ pub enum MungeZip {
     Default = c::munge_zip_MUNGE_ZIP_DEFAULT,
     Bzlib = c::munge_zip_MUNGE_ZIP_BZLIB,
     Zlib = c::munge_zip_MUNGE_ZIP_ZLIB,
-
-    //???
-    LastItem,
 }

@@ -102,12 +102,15 @@ fn munge_encode_decode() {
     "#;
 
     let mut ctx = munge_rs::ctx::Context::new();
-    ctx.set_socket(PathBuf::from("/usr/local/var/run/munge/munge.socket.2"))
-        .unwrap();
-    ctx.set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Bzlib as u32)
+    let default_socket = ctx.get_socket().expect("Failed to get socket path.");
+    ctx.set_socket(default_socket)
+        .expect("Failed to set socket path.");
+    ctx.set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Zlib as u32)
         .unwrap();
 
     let encoded = munge::encode(test_json, Some(&ctx)).unwrap();
+
+    println!("Encoded base64 String: \n\t{}\n", encoded);
 
     let decoded = munge::decode(encoded, Some(&ctx)).unwrap();
     println!("\nDecoded credential info: \n\t{:?}", decoded);
