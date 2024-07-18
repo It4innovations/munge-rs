@@ -1,6 +1,6 @@
 use std::{
     ffi::{self, CStr, CString},
-    path::{self, PathBuf},
+    path::PathBuf,
     ptr,
 };
 
@@ -18,7 +18,7 @@ impl Context {
     }
 
     /// Sets the path to the daemons socket of this [`Context`].
-    pub fn set_socket(&mut self, path: PathBuf) -> Result<(), enums::Error> {
+    pub fn set_socket(&mut self, path: PathBuf) -> Result<&mut Self, enums::Error> {
         let socket = path;
 
         let c_path = CString::new(socket.to_str().ok_or(enums::Error::InvalidUtf8)?)?;
@@ -29,17 +29,21 @@ impl Context {
         if _err != 0 {
             Err(MungeError::from_u32(_err).into())
         } else {
-            Ok(())
+            Ok(self)
         }
     }
 
     /// Sets an option that takes a number as a value in `munge_ctx`
-    pub fn set_ctx_opt(&self, option: MungeOption, value: u32) -> Result<(), MungeError> {
+    pub fn set_ctx_opt(
+        &mut self,
+        option: MungeOption,
+        value: u32,
+    ) -> Result<&mut Self, MungeError> {
         let _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, option as i32, value) };
         if _err != 0 {
             Err(MungeError::from_u32(_err))
         } else {
-            Ok(())
+            Ok(self)
         }
     }
 
@@ -93,7 +97,6 @@ mod contextTests {
         ctx::Context,
         enums::{MungeCipher, MungeMac, MungeOption, MungeZip},
     };
-    use std::path::PathBuf;
 
     #[test]
     fn getter_test() {
@@ -107,7 +110,7 @@ mod contextTests {
 
     #[test]
     fn set_ctx_opt() {
-        let ctx = Context::new();
+        let mut ctx = Context::new();
         assert!(ctx
             .set_ctx_opt(MungeOption::ZIP_TYPE, MungeZip::Bzlib as u32)
             .is_ok());
