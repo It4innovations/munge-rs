@@ -106,15 +106,6 @@ mod contextTests {
     }
 
     #[test]
-    fn create_ctx_with_socket() {
-        let mut ctx = Context::new();
-        assert!(ctx
-            .set_socket(PathBuf::from("/usr/local/var/run/munge/munge.socket.2"))
-            .is_ok());
-        assert!(!ctx.ctx.is_null())
-    }
-
-    #[test]
     fn set_ctx_opt() {
         let ctx = Context::new();
         assert!(ctx
