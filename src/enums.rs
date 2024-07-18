@@ -11,17 +11,17 @@ use crate::ffi as c;
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeOption {
-    CIPHER_TYPE = c::munge_opt_MUNGE_OPT_CIPHER_TYPE,
-    MAC_TYPE = c::munge_opt_MUNGE_OPT_MAC_TYPE,
-    ZIP_TYPE = c::munge_opt_MUNGE_OPT_ZIP_TYPE,
-    REALM = c::munge_opt_MUNGE_OPT_REALM,
-    TTL = c::munge_opt_MUNGE_OPT_TTL,
-    ADDR4 = c::munge_opt_MUNGE_OPT_ADDR4,
-    ENCODE_TIME = c::munge_opt_MUNGE_OPT_ENCODE_TIME,
-    DECODE_TIME = c::munge_opt_MUNGE_OPT_DECODE_TIME,
-    SOCKET = c::munge_opt_MUNGE_OPT_SOCKET,
-    UID_RESTRICTION = c::munge_opt_MUNGE_OPT_UID_RESTRICTION,
-    GID_RESTRICTION = c::munge_opt_MUNGE_OPT_GID_RESTRICTION,
+    CipherType = c::munge_opt_MUNGE_OPT_CIPHER_TYPE,
+    MacType = c::munge_opt_MUNGE_OPT_MAC_TYPE,
+    ZipType = c::munge_opt_MUNGE_OPT_ZIP_TYPE,
+    Realm = c::munge_opt_MUNGE_OPT_REALM,
+    Ttl = c::munge_opt_MUNGE_OPT_TTL,
+    Addr4 = c::munge_opt_MUNGE_OPT_ADDR4,
+    EncodeTime = c::munge_opt_MUNGE_OPT_ENCODE_TIME,
+    DecodeTime = c::munge_opt_MUNGE_OPT_DECODE_TIME,
+    Socket = c::munge_opt_MUNGE_OPT_SOCKET,
+    UidRestriction = c::munge_opt_MUNGE_OPT_UID_RESTRICTION,
+    GidRestriction = c::munge_opt_MUNGE_OPT_GID_RESTRICTION,
 }
 
 #[repr(u32)]
