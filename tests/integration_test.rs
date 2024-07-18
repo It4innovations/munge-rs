@@ -1,7 +1,5 @@
 extern crate munge_rs;
 
-use std::path::PathBuf;
-
 use munge_rs::{enums, munge};
 
 #[test]
@@ -63,8 +61,6 @@ fn munge_encode_w_ctx() {
     "#;
 
     let mut ctx = munge_rs::ctx::Context::new();
-    ctx.set_socket(PathBuf::from("/usr/local/var/run/munge/munge.socket.2"))
-        .expect("Failed to set the socket path.");
 
     ctx.set_ctx_opt(enums::MungeOption::TTL, 1024).unwrap();
     ctx.set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Bzlib as u32)
@@ -106,7 +102,12 @@ fn munge_encode_decode() {
     ctx.set_socket(default_socket)
         .expect("Failed to set socket path.");
     ctx.set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Zlib as u32)
-        .unwrap();
+        .expect("Failed to set compression type");
+    ctx.set_ctx_opt(
+        enums::MungeOption::MAC_TYPE,
+        enums::MungeMac::RIPEMD160 as u32,
+    )
+    .expect("Failed to set MAC");
 
     let encoded = munge::encode(test_json, Some(&ctx)).unwrap();
 

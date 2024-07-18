@@ -94,6 +94,7 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
 mod munge_tests {
     use crate::{
         ctx::Context,
+        enums::{MungeMac, MungeOption},
         munge::{self},
     };
 
@@ -107,6 +108,8 @@ mod munge_tests {
         let mut ctx = Context::new();
         let socket = ctx.get_socket().expect("Failed to get socket.");
         ctx.set_socket(socket).expect("Failed to set socket.");
+        ctx.set_ctx_opt(MungeOption::MAC_TYPE, MungeMac::RIPEMD160 as u32)
+            .expect("Failed to set MAC type");
         let cred = munge::encode("Hello World!", Some(&ctx)).expect("Failed to encode");
         println!("Cred with context: {:?}", cred);
     }
