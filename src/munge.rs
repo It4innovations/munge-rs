@@ -33,7 +33,7 @@ use crate::{
 ///     Err(e) => eprintln!("Failed to encode message: {:?}", e),
 /// }
 /// ```
-pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Error> {
+pub fn encode(msg: &str, ctx: Option<&Context>) -> Result<String, enums::Error> {
     let mut cred: *mut ffi::c_char = ptr::null_mut();
     let len: ffi::c_int = msg.len() as i32;
     let buf: *const ffi::c_void = CString::new(msg)?.into_raw() as *const ffi::c_void;
