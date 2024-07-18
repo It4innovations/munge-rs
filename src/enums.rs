@@ -8,6 +8,13 @@ use crate::ffi as c;
 /// This enum wraps various context options that can be used with MUNGE encoding and decoding operations.
 ///
 /// Each variant represents a different option and maps to a corresponding constant in the MUNGE C library.
+///
+/// # Examples
+///
+/// ```rust
+/// let option = MungeOption::CIPHER_TYPE;
+/// println!("Option: {:?}", option);
+/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeOption {
@@ -24,6 +31,9 @@ pub enum MungeOption {
     GidRestriction = c::munge_opt_MUNGE_OPT_GID_RESTRICTION,
 }
 
+/// Represents possible error codes returned by the MUNGE library.
+///
+/// These error codes are mapped to their corresponding constants in the MUNGE C library.
 #[repr(u32)]
 #[derive(Debug, Error)]
 pub enum MungeError {
@@ -83,6 +93,22 @@ pub enum MungeError {
 }
 
 impl MungeError {
+    /// Converts a raw error code (`u32`) from the MUNGE library into a `MungeError`.
+    ///
+    /// # Arguments
+    ///
+    /// * `err` - The raw error code to convert.
+    ///
+    /// # Returns
+    ///
+    /// A `MungeError` corresponding to the provided error code.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// let error = MungeError::from_u32(1);
+    /// println!("Error: {:?}", error);
+    /// ```
     pub fn from_u32(err: u32) -> MungeError {
         match err {
             c::munge_err_EMUNGE_SNAFU => MungeError::Snafu,
@@ -108,6 +134,7 @@ impl MungeError {
     }
 }
 
+/// Represents different types of errors that can occur in the library.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("munge errored: {0}")]
@@ -138,7 +165,16 @@ impl From<NulError> for Error {
     }
 }
 
-/// MUNGE symmetric cipher types
+/// Represents MUNGE symmetric cipher types.
+///
+/// Each variant maps to a corresponding constant in the MUNGE C library.
+///
+/// # Examples
+///
+/// ```ignore
+/// let cipher = MungeCipher::AES128;
+/// println!("Cipher: {:?}", cipher);
+/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeCipher {
@@ -150,7 +186,16 @@ pub enum MungeCipher {
     Aes256 = c::munge_cipher_MUNGE_CIPHER_AES256,
 }
 
-/// MUNGE message authentication code types
+/// Represents MUNGE message authentication code (MAC) types.
+///
+/// Each variant maps to a corresponding constant in the MUNGE C library.
+///
+/// # Examples
+///
+/// ```ignore
+/// let mac = MungeMac::SHA256;
+/// println!("MAC: {:?}", mac);
+/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeMac {
@@ -163,7 +208,16 @@ pub enum MungeMac {
     SHA512 = c::munge_mac_MUNGE_MAC_SHA512,
 }
 
-/// MUNGE compression types
+/// Represents MUNGE compression types.
+///
+/// Each variant maps to a corresponding constant in the MUNGE C library.
+///
+/// # Examples
+///
+/// ```ignore
+/// let zip = MungeZip::BZLIB;
+/// println!("ZIP: {:?}", zip);
+/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MungeZip {
