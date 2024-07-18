@@ -62,9 +62,10 @@ fn munge_encode_w_ctx() {
 
     let mut ctx = munge_rs::ctx::Context::new();
 
-    ctx.set_ctx_opt(enums::MungeOption::TTL, 1024).unwrap();
-    ctx.set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Bzlib as u32)
-        .unwrap();
+    ctx.set_ctx_opt(enums::MungeOption::TTL, 1024)
+        .expect("Failed to set TTL")
+        .set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Bzlib as u32)
+        .expect("Failed to set compression type");
 
     let out = munge::encode(test_json, Some(&ctx)).unwrap();
     println!("Encoded credential with custom context: \n\t{}\n", out);
@@ -100,14 +101,14 @@ fn munge_encode_decode() {
     let mut ctx = munge_rs::ctx::Context::new();
     let default_socket = ctx.get_socket().expect("Failed to get socket path.");
     ctx.set_socket(default_socket)
-        .expect("Failed to set socket path.");
-    ctx.set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Zlib as u32)
-        .expect("Failed to set compression type");
-    ctx.set_ctx_opt(
-        enums::MungeOption::MAC_TYPE,
-        enums::MungeMac::RIPEMD160 as u32,
-    )
-    .expect("Failed to set MAC");
+        .expect("Failed to set socket path.")
+        .set_ctx_opt(enums::MungeOption::ZIP_TYPE, enums::MungeZip::Zlib as u32)
+        .expect("Failed to set compression type")
+        .set_ctx_opt(
+            enums::MungeOption::MAC_TYPE,
+            enums::MungeMac::RIPEMD160 as u32,
+        )
+        .expect("Failed to set MAC");
 
     let encoded = munge::encode(test_json, Some(&ctx)).unwrap();
 
