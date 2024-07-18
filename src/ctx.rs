@@ -24,7 +24,7 @@ impl Context {
         let c_path = CString::new(socket.to_str().ok_or(enums::Error::InvalidUtf8)?)?;
 
         let _err = unsafe {
-            crate::ffi::munge_ctx_set(self.ctx, MungeOption::SOCKET as i32, c_path.as_ptr())
+            crate::ffi::munge_ctx_set(self.ctx, MungeOption::Socket as i32, c_path.as_ptr())
         };
         if _err != 0 {
             Err(MungeError::from_u32(_err).into())
@@ -57,7 +57,7 @@ impl Context {
         let mut c_path: *const ffi::c_char = ptr::null();
 
         let _err =
-            unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::SOCKET as i32, &mut c_path) };
+            unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::Socket as i32, &mut c_path) };
         let socket = unsafe { CStr::from_ptr(c_path) }.to_str()?.to_owned();
 
         if _err != 0 {
@@ -92,7 +92,7 @@ impl Drop for Context {
 }
 
 #[cfg(test)]
-mod contextTests {
+mod context_tests {
     use crate::{
         ctx::Context,
         enums::{MungeCipher, MungeMac, MungeOption, MungeZip},
@@ -102,7 +102,7 @@ mod contextTests {
     fn getter_test() {
         let mut ctx = Context::new();
         let res = ctx.get_socket().unwrap();
-        let i = ctx.get_ctx_opt(MungeOption::TTL).unwrap();
+        let i = ctx.get_ctx_opt(MungeOption::Ttl).unwrap();
         println!("Result: {:?}", res);
         println!("TTL: {}", i);
         println!();
@@ -112,14 +112,14 @@ mod contextTests {
     fn set_ctx_opt() {
         let mut ctx = Context::new();
         assert!(ctx
-            .set_ctx_opt(MungeOption::ZIP_TYPE, MungeZip::Bzlib as u32)
+            .set_ctx_opt(MungeOption::ZipType, MungeZip::Bzlib as u32)
             .is_ok());
         assert!(ctx
-            .set_ctx_opt(MungeOption::MAC_TYPE, MungeMac::SHA256 as u32)
+            .set_ctx_opt(MungeOption::MacType, MungeMac::SHA256 as u32)
             .is_ok());
         assert!(ctx
-            .set_ctx_opt(MungeOption::CIPHER_TYPE, MungeCipher::Aes256 as u32)
+            .set_ctx_opt(MungeOption::CipherType, MungeCipher::Aes256 as u32)
             .is_ok());
-        assert!(ctx.set_ctx_opt(MungeOption::TTL, 180).is_ok());
+        assert!(ctx.set_ctx_opt(MungeOption::Ttl, 180).is_ok());
     }
 }

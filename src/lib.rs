@@ -2,13 +2,15 @@
 //!
 //!
 
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-
+#[allow(dead_code, unused_imports, non_upper_case_globals, non_camel_case_types, non_snake_case)]
 mod ffi;
 
-pub mod credential;
-pub mod ctx;
-pub mod enums;
-pub mod munge;
+mod credential;
+mod ctx;
+mod enums;
+mod munge;
+
+pub use credential::Credential;
+pub use ctx::Context;
+pub use enums::{Error, MungeError, MungeOption, MungeCipher, MungeMac, MungeZip};
+pub use munge::{encode, decode};

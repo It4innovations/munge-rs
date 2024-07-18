@@ -5,20 +5,16 @@ use std::{
 
 use crate::{
     credential::Credential,
-    ctx,
+    ctx::Context,
     enums::{self, MungeError},
     ffi as c,
 };
-
-// for the doc string
-#[allow(unused_imports)]
-use ctx::Context;
 
 /// Takes a string to be included with encoded credential and an optional [`Context`]
 ///
 /// # Errors
 ///
-pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Error> {
+pub fn encode(msg: &str, ctx: Option<&Context>) -> Result<String, enums::Error> {
     let mut cred: *mut ffi::c_char = ptr::null_mut();
     let len: ffi::c_int = msg.len() as i32;
     let buf: *const ffi::c_void = CString::new(msg)?.into_raw() as *const ffi::c_void;
@@ -41,13 +37,13 @@ pub fn encode(msg: &str, ctx: Option<&ctx::Context>) -> Result<String, enums::Er
 }
 
 /// Decodes the provided base64 encoded string.
-/// If no context is provided the default values are used.  
+/// If no context is provided the default values are used.
 ///
 /// Returns a [`Credential`]
 ///
 /// # Errors
 ///
-/// This will return an error thrown by munge or when the provided [`encoded_msg`] is invalid ie.
+/// This will return an error thrown by munge or when the provided `encoded_msg` is invalid ie.
 /// the bytes provided contain an internal 0 byte. [`std::ffi::NulError`]
 pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, enums::Error> {
     let cred: *mut ffi::c_char = CString::new(encoded_msg)?.into_raw();
@@ -108,7 +104,7 @@ mod munge_tests {
         let mut ctx = Context::new();
         let socket = ctx.get_socket().expect("Failed to get socket.");
         ctx.set_socket(socket).expect("Failed to set socket.");
-        ctx.set_ctx_opt(MungeOption::MAC_TYPE, MungeMac::RIPEMD160 as u32)
+        ctx.set_ctx_opt(MungeOption::MacType, MungeMac::RIPEMD160 as u32)
             .expect("Failed to set MAC type");
         let cred = munge::encode("Hello World!", Some(&ctx)).expect("Failed to encode");
         println!("Cred with context: {:?}", cred);
