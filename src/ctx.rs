@@ -2,6 +2,7 @@ use std::{
     ffi::{self, CStr, CString},
     path::PathBuf,
     ptr,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use crate::{
@@ -295,7 +296,7 @@ impl Context {
     }
 
     // TODO: Rest of the getters
-    // realm, addr4, encode_time, decode_time, uid_restriction,
+    // realm (Not supported yet), encode_time, decode_time, uid_restriction,
     // gid_restriction
 
     /// Retrieves the time-to-live (TTL) value for the context.
@@ -396,6 +397,59 @@ impl Context {
         match self.get_ctx_opt(MungeOption::ZipType) {
             Ok(cipher) => Ok(MungeCipher::try_from(cipher as u32)?),
             Err(e) => Err(e),
+        }
+    }
+
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let decoded = munge::decode(encoded, Some(&ctx)).unwrap();
+    /// let addr4 = ctx.addr4().unwrap();
+    /// let ip4: Ipv4Addr = Ipv4Addr::from(addr4.to_be());
+    /// ```
+    pub fn addr4(&self) -> Result<u32, Error> {
+        let mut value: u32 = 42;
+
+        let _err =
+            unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::Addr4 as i32, &mut value) };
+
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
+        } else {
+            Ok(value)
+        }
+    }
+
+    pub fn encode_time(&self) -> Result<SystemTime, Error> {
+        let mut c_time: libc::time_t = 0i64;
+
+        let _err = unsafe {
+            crate::ffi::munge_ctx_get(self.ctx, MungeOption::EncodeTime as i32, &mut c_time)
+        };
+
+        let rust_time: SystemTime = UNIX_EPOCH + Duration::from_secs(c_time as u64);
+
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
+        } else {
+            Ok(rust_time)
+        }
+    }
+
+    pub fn decode_time(&self) -> Result<SystemTime, Error> {
+        let mut c_time: libc::time_t = 0i64;
+
+        let _err = unsafe {
+            crate::ffi::munge_ctx_get(self.ctx, MungeOption::DecodeTime as i32, &mut c_time)
+        };
+
+        let rust_time: SystemTime = UNIX_EPOCH + Duration::from_secs(c_time as u64);
+
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
+        } else {
+            Ok(rust_time)
         }
     }
 
