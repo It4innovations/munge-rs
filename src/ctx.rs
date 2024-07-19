@@ -5,7 +5,7 @@ use std::{
 };
 
 use crate::{
-    enums::{self, Error, MungeError, MungeOption},
+    enums::{Error, MungeError, MungeOption},
     MungeCipher, MungeMac, MungeZip,
 };
 
@@ -34,11 +34,11 @@ impl Context {
     ///
     /// # Arguments
     ///
-    /// * `path` - The `PathBuf` specifying the socket path to set.
+    /// * `path` - The [`PathBuf`] specifying the socket path to set.
     ///
     /// # Errors
     ///
-    /// Returns an `enums::Error` if:
+    /// Returns an [`Error`] if:
     /// - The path cannot be converted to a UTF-8 string.
     /// - The function call to `munge_ctx_set` fails.
     ///
@@ -74,12 +74,12 @@ impl Context {
     ///
     /// # Arguments
     ///
-    /// * `option` - The `MungeOption` to set.
+    /// * `option` - The [`MungeOption`] to set.
     /// * `value` - The value to set for the specified option.
     ///
     /// # Errors
     ///
-    /// Returns a `MungeError` if the function call to `munge_ctx_set` fails.
+    /// Returns a [`MungeError`] if the function call to `munge_ctx_set` fails.
     ///
     /// # Returns
     ///
@@ -109,38 +109,135 @@ impl Context {
 
     // TODO: Documentation
     // uid_restriction, gid_restriction
-    pub fn set_ttl(&mut self, ttl: u32) -> Result<&mut Self, MungeError> {
-        self.set_ctx_opt(MungeOption::Ttl, ttl)
-    }
-    pub fn set_mac(&mut self, mac: MungeMac) -> Result<&mut Self, MungeError> {
-        self.set_ctx_opt(MungeOption::MacType, mac as u32)
-    }
-    pub fn set_zip(&mut self, zip_type: MungeZip) -> Result<&mut Self, MungeError> {
-        self.set_ctx_opt(MungeOption::ZipType, zip_type as u32)
-    }
-    pub fn set_cipher(&mut self, cipher: MungeCipher) -> Result<&mut Self, MungeError> {
-        self.set_ctx_opt(MungeOption::CipherType, cipher as u32)
-    }
-    pub fn set_realm(&mut self, realm: String) -> Result<&mut Self, Error> {
-        let _realm = realm;
 
-        let c_str = CString::new(_realm.to_string())?;
-
-        let _err = unsafe {
-            crate::ffi::munge_ctx_set(self.ctx, MungeOption::Realm as i32, c_str.as_ptr())
-        };
-        if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
-        } else {
-            Ok(self)
-        }
-    }
-
-    /// Retrieves the socket path from the context and returns it as a `PathBuf`.
+    /// Sets the time-to-live (TTL) for the context.
+    ///
+    /// # Arguments
+    ///
+    /// * `ttl` - The TTL value to set.
     ///
     /// # Errors
     ///
-    /// Returns an `enums::Error` if the function call to `munge_ctx_get` fails or
+    /// Returns a [`MungeError`] if the function call to `munge_ctx_set` fails.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns a mutable reference to `self` for method chaining.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.set_ttl(60) {
+    ///     Ok(ctx) => println!("TTL set successfully"),
+    ///     Err(e) => eprintln!("Failed to set TTL: {:?}", e),
+    /// }
+    /// ```
+    pub fn set_ttl(&mut self, ttl: u32) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::Ttl, ttl)
+    }
+
+    /// Sets the message authentication code (MAC) type for the context.
+    ///
+    /// # Arguments
+    ///
+    /// * `mac` - The [`MungeMac`] type to set.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MungeError`] if the function call to `munge_ctx_set` fails.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns a mutable reference to `self` for method chaining.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.set_mac(MungeMac::SHA256) {
+    ///     Ok(ctx) => println!("MAC type set successfully"),
+    ///     Err(e) => eprintln!("Failed to set MAC type: {:?}", e),
+    /// }
+    /// ```
+    pub fn set_mac(&mut self, mac: MungeMac) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::MacType, mac as u32)
+    }
+
+    /// Sets the compression type for the context.
+    ///
+    /// # Arguments
+    ///
+    /// * `zip_type` - The [`MungeZip`] type to set.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MungeError`] if the function call to `munge_ctx_set` fails.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns a mutable reference to `self` for method chaining.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.set_zip(MungeZip::Zlib) {
+    ///     Ok(ctx) => println!("Compression type set successfully"),
+    ///     Err(e) => eprintln!("Failed to set compression type: {:?}", e),
+    /// }
+    /// ```
+    pub fn set_zip(&mut self, zip_type: MungeZip) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::ZipType, zip_type as u32)
+    }
+
+    /// Sets the cipher type for the context.
+    ///
+    /// # Arguments
+    ///
+    /// * `cipher` - The [`MungeCipher`] type to set.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MungeError`] if the function call to `munge_ctx_set` fails.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns a mutable reference to `self` for method chaining.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.set_cipher(MungeCipher::Aes256) {
+    ///     Ok(ctx) => println!("Cipher type set successfully"),
+    ///     Err(e) => eprintln!("Failed to set cipher type: {:?}", e),
+    /// }
+    /// ```
+    pub fn set_cipher(&mut self, cipher: MungeCipher) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::CipherType, cipher as u32)
+    }
+
+    // pub fn set_realm(&mut self, realm: String) -> Result<&mut Self, Error> {
+    //     let _realm = realm;
+
+    //     let c_str = CString::new(_realm.to_string())?;
+
+    //     let _err = unsafe {
+    //         crate::ffi::munge_ctx_set(self.ctx, MungeOption::Realm as i32, c_str.as_ptr())
+    //     };
+    //     if _err != 0 {
+    //         Err(MungeError::from_u32(_err).into())
+    //     } else {
+    //         Ok(self)
+    //     }
+    // }
+
+    /// Retrieves the socket path from the context and returns it as a [`PathBuf`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if the function call to `munge_ctx_get` fails or
     /// if the string conversion fails.
     ///
     /// # Example
@@ -170,11 +267,11 @@ impl Context {
     ///
     /// # Arguments
     ///
-    /// * `option` - The `MungeOption` to retrieve from the context.
+    /// * `option` - The [`MungeOption`] to retrieve from the context.
     ///
     /// # Errors
     ///
-    /// Returns an `enums::Error` if the function call to `munge_ctx_get` fails.
+    /// Returns an [`Error`] if the function call to `munge_ctx_get` fails.
     ///
     /// # Example
     ///
@@ -200,21 +297,101 @@ impl Context {
     // TODO: Rest of the getters
     // realm, addr4, encode_time, decode_time, uid_restriction,
     // gid_restriction
+
+    /// Retrieves the time-to-live (TTL) value for the context.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if the function call to `munge_ctx_get` fails.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns the TTL value as an [`i32`].
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.ttl() {
+    ///     Ok(ttl) => println!("TTL: {}", ttl),
+    ///     Err(e) => eprintln!("Failed to get TTL: {:?}", e),
+    /// }
+    /// ```
     pub fn ttl(&self) -> Result<i32, Error> {
         self.get_ctx_opt(MungeOption::Ttl)
     }
+
+    /// Retrieves the message authentication code (MAC) type for the context.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if the function call to `munge_ctx_get` fails or the MAC type is invalid.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns the MAC type as a [`MungeMac`].
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.mac() {
+    ///     Ok(mac) => println!("MAC type: {:?}", mac),
+    ///     Err(e) => eprintln!("Failed to get MAC type: {:?}", e),
+    /// }
+    /// ```
     pub fn mac(&self) -> Result<MungeMac, Error> {
         match self.get_ctx_opt(MungeOption::MacType) {
             Ok(mac) => Ok(MungeMac::try_from(mac as u32)?),
             Err(e) => Err(e),
         }
     }
+
+    /// Retrieves the compression type for the context.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if the function call to `munge_ctx_get` fails or the compression type is invalid.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns the compression type as a [`MungeZip`].
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.zip() {
+    ///     Ok(zip) => println!("Compression type: {:?}", zip),
+    ///     Err(e) => eprintln!("Failed to get compression type: {:?}", e),
+    /// }
+    /// ```
     pub fn zip(&self) -> Result<MungeZip, Error> {
         match self.get_ctx_opt(MungeOption::ZipType) {
             Ok(zip) => Ok(MungeZip::try_from(zip as u32)?),
             Err(e) => Err(e),
         }
     }
+
+    /// Retrieves the cipher type for the context.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if the function call to `munge_ctx_get` fails or the cipher type is invalid.
+    ///
+    /// # Returns
+    ///
+    /// On success, returns the cipher type as a [`MungeCipher`].
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.cipher() {
+    ///     Ok(cipher) => println!("Cipher type: {:?}", cipher),
+    ///     Err(e) => eprintln!("Failed to get cipher type: {:?}", e),
+    /// }
+    /// ```
     pub fn cipher(&self) -> Result<MungeCipher, Error> {
         match self.get_ctx_opt(MungeOption::ZipType) {
             Ok(cipher) => Ok(MungeCipher::try_from(cipher as u32)?),
