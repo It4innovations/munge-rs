@@ -108,6 +108,7 @@ impl Context {
     }
 
     // TODO: Documentation
+    // uid_restriction, gid_restriction
     pub fn set_ttl(&mut self, ttl: u32) -> Result<&mut Self, MungeError> {
         self.set_ctx_opt(MungeOption::Ttl, ttl)
     }
@@ -197,31 +198,46 @@ impl Context {
     }
 
     // TODO: Rest of the getters
-    // ttl, mac, zip, cipher, realm
-    pub fn get_ttl(&self) -> Result<i32, Error> {
+    // realm, addr4, encode_time, decode_time, uid_restriction,
+    // gid_restriction
+    pub fn ttl(&self) -> Result<i32, Error> {
         self.get_ctx_opt(MungeOption::Ttl)
     }
-    pub fn get_mac(&self) -> Result<MungeMac, Error> {
+    pub fn mac(&self) -> Result<MungeMac, Error> {
         match self.get_ctx_opt(MungeOption::MacType) {
             Ok(mac) => Ok(MungeMac::try_from(mac as u32)?),
             Err(e) => Err(e),
         }
     }
-    pub fn get_zip(&self) -> Result<MungeZip, Error> {
+    pub fn zip(&self) -> Result<MungeZip, Error> {
         match self.get_ctx_opt(MungeOption::ZipType) {
             Ok(zip) => Ok(MungeZip::try_from(zip as u32)?),
             Err(e) => Err(e),
         }
     }
-    pub fn get_cipher(&self) -> Result<MungeCipher, Error> {
+    pub fn cipher(&self) -> Result<MungeCipher, Error> {
         match self.get_ctx_opt(MungeOption::ZipType) {
             Ok(cipher) => Ok(MungeCipher::try_from(cipher as u32)?),
             Err(e) => Err(e),
         }
     }
-    pub fn get_realm(&self) -> Result<String, MungeError> {
-        todo!()
-    }
+
+    // pub fn realm(&self) -> Result<String, Error> {
+    //     let mut c_str: *const ffi::c_char = ptr::null();
+    //
+    //     let _err =
+    //         unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::Realm as i32, &mut c_str) };
+    //     if c_str.is_null() {
+    //         return Err(Error::NonUtf8SocketPath);
+    //     }
+    //     let realm = unsafe { CStr::from_ptr(c_str) }.to_str()?.to_owned();
+    //
+    //     if _err != 0 {
+    //         Err(MungeError::from_u32(_err).into())
+    //     } else {
+    //         Ok(realm)
+    //     }
+    // }
 }
 
 impl Drop for Context {
@@ -246,6 +262,13 @@ mod context_tests {
         println!("TTL: {}", i);
         println!();
     }
+
+    // #[test]
+    // fn relm_getter_test() {
+    //     let mut ctx = Context::new();
+    //     let realm = ctx.realm().expect("Failed to get realm");
+    //     println!("\nRealm: \t{}\n", realm);
+    // }
 
     #[test]
     fn set_ctx_opt() {
