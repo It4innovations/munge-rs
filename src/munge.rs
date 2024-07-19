@@ -122,7 +122,7 @@ mod munge_tests {
     #[test]
     fn encode_test_w_ctx() {
         let mut ctx = Context::new();
-        let socket = ctx.get_socket().expect("Failed to get socket.");
+        let socket = ctx.socket().expect("Failed to get socket.");
         ctx.set_socket(socket).expect("Failed to set socket.");
         ctx.set_ctx_opt(MungeOption::MacType, MungeMac::RIPEMD160 as u32)
             .expect("Failed to set MAC type");

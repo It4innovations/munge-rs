@@ -4,7 +4,10 @@ use std::{
     ptr,
 };
 
-use crate::enums::{self, MungeError, MungeOption};
+use crate::{
+    enums::{self, Error, MungeError, MungeOption},
+    MungeCipher, MungeMac, MungeZip,
+};
 
 /// Represents a context used for managing options and settings.
 ///
@@ -52,10 +55,10 @@ impl Context {
     ///     Err(e) => eprintln!("Failed to set socket path: {:?}", e),
     /// }
     /// ```
-    pub fn set_socket(&mut self, path: PathBuf) -> Result<&mut Self, enums::Error> {
+    pub fn set_socket(&mut self, path: PathBuf) -> Result<&mut Self, Error> {
         let socket = path;
 
-        let c_path = CString::new(socket.to_str().ok_or(enums::Error::InvalidUtf8)?)?;
+        let c_path = CString::new(socket.to_str().ok_or(Error::NonUtf8SocketPath)?)?;
 
         let _err = unsafe {
             crate::ffi::munge_ctx_set(self.ctx, MungeOption::Socket as i32, c_path.as_ptr())
@@ -91,7 +94,7 @@ impl Context {
     ///     Err(e) => eprintln!("Failed to set option value: {:?}", e),
     /// }
     /// ```
-    pub fn set_ctx_opt(
+    pub(crate) fn set_ctx_opt(
         &mut self,
         option: MungeOption,
         value: u32,
@@ -99,6 +102,34 @@ impl Context {
         let _err = unsafe { crate::ffi::munge_ctx_set(self.ctx, option as i32, value) };
         if _err != 0 {
             Err(MungeError::from_u32(_err))
+        } else {
+            Ok(self)
+        }
+    }
+
+    // TODO: Documentation
+    pub fn set_ttl(&mut self, ttl: u32) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::Ttl, ttl)
+    }
+    pub fn set_mac(&mut self, mac: MungeMac) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::MacType, mac as u32)
+    }
+    pub fn set_zip(&mut self, zip_type: MungeZip) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::ZipType, zip_type as u32)
+    }
+    pub fn set_cipher(&mut self, cipher: MungeCipher) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::CipherType, cipher as u32)
+    }
+    pub fn set_realm(&mut self, realm: String) -> Result<&mut Self, Error> {
+        let _realm = realm;
+
+        let c_str = CString::new(_realm.to_string())?;
+
+        let _err = unsafe {
+            crate::ffi::munge_ctx_set(self.ctx, MungeOption::Realm as i32, c_str.as_ptr())
+        };
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
         } else {
             Ok(self)
         }
@@ -120,7 +151,7 @@ impl Context {
     ///     Err(e) => eprintln!("Failed to get socket path: {:?}", e),
     /// }
     /// ```
-    pub fn get_socket(&mut self) -> Result<PathBuf, enums::Error> {
+    pub fn socket(&mut self) -> Result<PathBuf, Error> {
         let mut c_path: *const ffi::c_char = ptr::null();
 
         let _err =
@@ -153,7 +184,7 @@ impl Context {
     ///     Err(e) => eprintln!("Failed to get option value: {:?}", e),
     /// }
     /// ```
-    pub fn get_ctx_opt(&self, option: MungeOption) -> Result<i32, enums::Error> {
+    pub(crate) fn get_ctx_opt(&self, option: MungeOption) -> Result<i32, Error> {
         let mut value: i32 = 42;
 
         let _err = unsafe { crate::ffi::munge_ctx_get(self.ctx, option as i32, &mut value) };
@@ -163,6 +194,33 @@ impl Context {
         } else {
             Ok(value)
         }
+    }
+
+    // TODO: Rest of the getters
+    // ttl, mac, zip, cipher, realm
+    pub fn get_ttl(&self) -> Result<i32, Error> {
+        self.get_ctx_opt(MungeOption::Ttl)
+    }
+    pub fn get_mac(&self) -> Result<MungeMac, Error> {
+        match self.get_ctx_opt(MungeOption::MacType) {
+            Ok(mac) => Ok(MungeMac::try_from(mac as u32)?),
+            Err(e) => Err(e),
+        }
+    }
+    pub fn get_zip(&self) -> Result<MungeZip, Error> {
+        match self.get_ctx_opt(MungeOption::ZipType) {
+            Ok(zip) => Ok(MungeZip::try_from(zip as u32)?),
+            Err(e) => Err(e),
+        }
+    }
+    pub fn get_cipher(&self) -> Result<MungeCipher, Error> {
+        match self.get_ctx_opt(MungeOption::ZipType) {
+            Ok(cipher) => Ok(MungeCipher::try_from(cipher as u32)?),
+            Err(e) => Err(e),
+        }
+    }
+    pub fn get_realm(&self) -> Result<String, MungeError> {
+        todo!()
     }
 }
 
@@ -182,7 +240,7 @@ mod context_tests {
     #[test]
     fn getter_test() {
         let mut ctx = Context::new();
-        let res = ctx.get_socket().unwrap();
+        let res = ctx.socket().unwrap();
         let i = ctx.get_ctx_opt(MungeOption::Ttl).unwrap();
         println!("Result: {:?}", res);
         println!("TTL: {}", i);

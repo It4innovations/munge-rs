@@ -1,3 +1,4 @@
+use num_enum::{TryFromPrimitive, TryFromPrimitiveError};
 use std::{ffi::NulError, str::Utf8Error, string::FromUtf8Error};
 use thiserror::Error;
 
@@ -141,27 +142,28 @@ pub enum Error {
     MungeError(#[from] MungeError),
 
     #[error("C string to Rust string lift failed: got non-UTF8 output")]
-    InvalidUtf8,
+    InvalidUtf8(#[from] Utf8Error),
+
+    #[error("Rust string to UTF-8 conversion failed: got invalid UTF-8 output")]
+    InvalidFromUtf8(FromUtf8Error),
 
     #[error("Rust string to C string lift failed: input had inner null")]
-    InnerNull,
-}
+    InnerNull(#[from] NulError),
 
-impl From<Utf8Error> for Error {
-    fn from(_value: Utf8Error) -> Self {
-        Error::InvalidUtf8
-    }
+    #[error("Unable to use a non UTF8 socket path")]
+    NonUtf8SocketPath,
+
+    #[error("Failed to convert from primitive to MungeCipher")]
+    TryFromPrimitiveCipher(#[from] TryFromPrimitiveError<MungeCipher>),
+    #[error("Failed to convert from primitive to MungeMac")]
+    TryFromPrimitiveMac(#[from] TryFromPrimitiveError<MungeMac>),
+    #[error("Failed to convert from primitive to MungeZip")]
+    TryFromPrimitiveZip(#[from] TryFromPrimitiveError<MungeZip>),
 }
 
 impl From<FromUtf8Error> for Error {
-    fn from(_value: FromUtf8Error) -> Self {
-        Error::InvalidUtf8
-    }
-}
-
-impl From<NulError> for Error {
-    fn from(_value: NulError) -> Self {
-        Error::InnerNull
+    fn from(value: FromUtf8Error) -> Self {
+        Error::InvalidFromUtf8(value)
     }
 }
 
@@ -176,7 +178,7 @@ impl From<NulError> for Error {
 /// println!("Cipher: {:?}", cipher);
 /// ```
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 pub enum MungeCipher {
     None = c::munge_cipher_MUNGE_CIPHER_NONE,
     Default = c::munge_cipher_MUNGE_CIPHER_DEFAULT,
@@ -197,7 +199,7 @@ pub enum MungeCipher {
 /// println!("MAC: {:?}", mac);
 /// ```
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 pub enum MungeMac {
     None = c::munge_mac_MUNGE_MAC_NONE,
     Default = c::munge_mac_MUNGE_MAC_DEFAULT,
@@ -219,7 +221,7 @@ pub enum MungeMac {
 /// println!("ZIP: {:?}", zip);
 /// ```
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 pub enum MungeZip {
     None = c::munge_zip_MUNGE_ZIP_NONE,
     Default = c::munge_zip_MUNGE_ZIP_DEFAULT,
