@@ -63,7 +63,7 @@ pub fn encode(msg: &str, ctx: Option<&Context>) -> Result<String, enums::Error> 
 }
 
 /// Decodes the provided base64 encoded string.
-/// If no context is provided the default values are used.  
+/// If no context is provided the default values are used.
 ///
 /// * `encoded_msg` - The base64 encoded credential string to decode.
 /// * `ctx` - An optional reference to a [`Context`]. If no context is provided, defaults will be used.
@@ -179,6 +179,7 @@ mod munge_tests {
         let cred = munge::encode("Hello World! 'aaaa'", None).expect("Failed to encode");
         println!("{:?}", cred);
     }
+
     #[test]
     fn encode_test_w_ctx() {
         let mut ctx = Context::new();

@@ -15,21 +15,13 @@ use crate::{
     MungeCipher, MungeMac, MungeZip,
 };
 
-/// Represents a context used for managing options and settings.
-///
-/// This struct is used to configure and interact with various options.
-///
-/// # Examples
-///
-/// ```ignore
-/// let mut ctx = Context::new(); // Hypothetical function to create a new context
-/// // ...use ctx to set or get options
-/// ```
+/// Context used for managing options and settings.
 pub struct Context {
     pub(crate) ctx: *mut crate::ffi::munge_ctx,
 }
 
 impl Context {
+    /// Create a new [`Context`]
     pub fn new() -> Self {
         Context {
             ctx: unsafe { crate::ffi::munge_ctx_create() },
@@ -119,8 +111,6 @@ impl Context {
             Ok(self)
         }
     }
-
-    // uid_restriction, gid_restriction
 
     /// Sets the time-to-live (TTL) for the context.
     ///
@@ -229,21 +219,6 @@ impl Context {
     pub fn set_cipher(&mut self, cipher: MungeCipher) -> Result<&mut Self, MungeError> {
         self.set_ctx_opt(MungeOption::CipherType, cipher as u32)
     }
-
-    // pub fn set_realm(&mut self, realm: String) -> Result<&mut Self, Error> {
-    //     let _realm = realm;
-
-    //     let c_str = CString::new(_realm.to_string())?;
-
-    //     let _err = unsafe {
-    //         crate::ffi::munge_ctx_set(self.ctx, MungeOption::Realm as i32, c_str.as_ptr())
-    //     };
-    //     if _err != 0 {
-    //         Err(MungeError::from_u32(_err).into())
-    //     } else {
-    //         Ok(self)
-    //     }
-    // }
 
     /// Sets the user ID (UID) restriction for the current context.
     ///
@@ -459,7 +434,6 @@ impl Context {
     /// ```ignore
     /// let decoded = munge::decode(encoded, Some(&ctx)).unwrap();
     /// let addr4 = ctx.addr4().unwrap();
-    /// let ip4: Ipv4Addr = Ipv4Addr::from(addr4.to_be());
     /// ```
     pub fn addr4(&self) -> Result<Ipv4Addr, Error> {
         let mut value: u32 = 42;
@@ -687,23 +661,6 @@ impl Context {
         Ok(out_err.map(|s| s.to_string()))
     }
 
-    // pub fn realm(&self) -> Result<String, Error> {
-    //     let mut c_str: *const ffi::c_char = ptr::null();
-    //
-    //     let _err =
-    //         unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::Realm as i32, &mut c_str) };
-    //     if c_str.is_null() {
-    //         return Err(Error::NonUtf8SocketPath);
-    //     }
-    //     let realm = unsafe { CStr::from_ptr(c_str) }.to_str()?.to_owned();
-    //
-    //     if _err != 0 {
-    //         Err(MungeError::from_u32(_err).into())
-    //     } else {
-    //         Ok(realm)
-    //     }
-    // }
-
     /// Checks the result of a MUNGE operation that returns a `u32`.
     ///
     /// This function examines the provided error code from a MUNGE operation. If the error code
@@ -733,6 +690,7 @@ impl Context {
             Ok(ret_val)
         }
     }
+
     /// Checks the result of a MUNGE operation that returns an `i32`.
     ///
     /// This function examines the provided error code from a MUNGE operation. If the error code
@@ -762,6 +720,7 @@ impl Context {
             Ok(ret_val)
         }
     }
+
     /// Checks the result of a MUNGE operation that returns a `DateTime<Utc>`.
     ///
     /// This function examines the provided error code from a MUNGE operation. If the error code
@@ -830,13 +789,6 @@ mod context_tests {
         println!("TTL: {}", i);
         println!();
     }
-
-    // #[test]
-    // fn relm_getter_test() {
-    //     let mut ctx = Context::new();
-    //     let realm = ctx.realm().expect("Failed to get realm");
-    //     println!("\nRealm: \t{}\n", realm);
-    // }
 
     #[test]
     fn set_ctx_opt() {
