@@ -63,7 +63,7 @@ pub fn encode(msg: &str, ctx: Option<&Context>) -> Result<String, enums::Error> 
 ///
 /// # Errors
 ///
-/// This will return an error thrown by munge or when the provided [`encoded_msg`] is invalid ie.
+/// This will return an error thrown by munge or when the provided `encoded_msg` is invalid ie.
 /// the bytes provided contain an internal 0 byte. [`std::ffi::NulError`]
 pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, enums::Error> {
     let cred: *mut ffi::c_char = CString::new(encoded_msg)?.into_raw();
