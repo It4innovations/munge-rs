@@ -106,13 +106,31 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
     }
 }
 
+pub fn str_error(error: u32) -> Result<Option<String>, enums::Error> {
+    let mut err: *const libc::c_char = ptr::null();
+
+    err = unsafe { crate::ffi::munge_strerror(error) };
+    if err.is_null() {
+        Ok(None)
+    } else {
+        let out_err = unsafe { CStr::from_ptr(err) }.to_str()?.to_owned();
+        Ok(Some(out_err))
+    }
+}
+
 #[cfg(test)]
 mod munge_tests {
     use crate::{
         ctx::Context,
         enums::{MungeMac, MungeOption},
-        munge::{self},
+        munge::{self, str_error},
     };
+
+    #[test]
+    fn str_error_test() {
+        let err = str_error(13).unwrap().unwrap();
+        println!("Bad Realm Error: {err}");
+    }
 
     #[test]
     fn encode_test() {
