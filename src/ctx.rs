@@ -2,11 +2,13 @@
 
 use std::{
     ffi::{self, CStr, CString},
+    net::Ipv4Addr,
     path::PathBuf,
     ptr,
     str::Utf8Error,
-    time::{Duration, SystemTime, UNIX_EPOCH},
 };
+
+use chrono::{DateTime, Utc};
 
 use crate::{
     enums::{Error, MungeError, MungeOption},
@@ -118,7 +120,6 @@ impl Context {
         }
     }
 
-    // TODO: Documentation
     // uid_restriction, gid_restriction
 
     /// Sets the time-to-live (TTL) for the context.
@@ -337,9 +338,6 @@ impl Context {
         self.error_check_i32(_err, value)
     }
 
-    // TODO: Rest of the getters
-    // realm (Not supported yet)
-
     /// Retrieves the time-to-live (TTL) value for the context.
     ///
     /// # Errors
@@ -441,16 +439,14 @@ impl Context {
         }
     }
 
-    /// Retrieves the IPv4 address (Addr4) associated with the current context.
+    /// Retrieves the IPv4 address ([`Ipv4Addr`]) associated with the current context.
     ///
-    /// This function calls the MUNGE library to obtain the IPv4 address, which is
-    /// represented as a `u32`. The returned value can be converted to an `Ipv4Addr`
-    /// for easier manipulation and display.
+    /// This function calls the MUNGE library to obtain the IPv4 address
     ///
     /// # Returns
     ///
-    /// Returns a `Result<u32, Error>`, where:
-    /// - `Ok(u32)` contains the IPv4 address on success.
+    /// Returns a [`Result<Ipv4Addr, Error>`], where:
+    /// - `Ok(Ipv4Addr)` contains the IPv4 address on success.
     /// - `Err(Error)` if the function call to the MUNGE library fails.
     ///
     /// # Errors
@@ -465,89 +461,97 @@ impl Context {
     /// let addr4 = ctx.addr4().unwrap();
     /// let ip4: Ipv4Addr = Ipv4Addr::from(addr4.to_be());
     /// ```
-    pub fn addr4(&self) -> Result<u32, Error> {
+    pub fn addr4(&self) -> Result<Ipv4Addr, Error> {
         let mut value: u32 = 42;
 
         let _err =
             unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::Addr4 as i32, &mut value) };
 
-        self.error_check_u32(_err, value)
+        if _err != 0 {
+            Err(Error::MungeError(
+                MungeError::from_u32(_err),
+                match self.str_error()? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                },
+            ))
+        } else {
+            Ok(Ipv4Addr::from(value.to_be()))
+        }
     }
 
-    /// Retrieves the encode time for the current context.
-    ///
-    /// This function calls the MUNGE library to obtain the encode time, which is
-    /// represented as a `time_t`. The returned time is converted to Rust's
-    /// [`SystemTime`] representation.
+    /// Retrieves the encode time for the current context and converts it to a `DateTime<Utc>`.
     ///
     /// # Returns
     ///
-    /// Returns a `Result<SystemTime, Error>`, where:
-    /// - `Ok(SystemTime)` contains the encode time on success.
-    /// - `Err(Error)` if the function call to the MUNGE library fails.
+    /// Returns a `Result<DateTime<Utc>, Error>`, where:
+    /// - `Ok(DateTime<Utc>)` contains the encode time on success.
+    /// - `Err(Error)` if the function call to the MUNGE library fails or if the conversion
+    ///   to a `DateTime<Utc>` is invalid.
     ///
     /// # Errors
     ///
-    /// Returns an [`Error`] if:
-    /// - The function call to `munge_ctx_get` fails.
+    /// Returns an `Error` if:
+    /// - The function call to `munge_ctx_get` fails, defined by the MUNGE library.
+    /// - The conversion from `time_t` to `DateTime<Utc>` fails.
     ///
     /// # Example
     ///
     /// ```ignore
     /// let ctx = Context::new(); // Hypothetical function to create a new context
     /// match ctx.encode_time() {
-    ///     Ok(time) => println!("Encode time: {:?}", time),
+    ///     Ok(date_time) => println!("Encode time: {:?}", date_time),
     ///     Err(e) => eprintln!("Failed to retrieve encode time: {:?}", e),
     /// }
     /// ```
-    pub fn encode_time(&self) -> Result<SystemTime, Error> {
+    pub fn encode_time(&self) -> Result<DateTime<Utc>, Error> {
         let mut c_time: libc::time_t = 0i64;
 
         let _err = unsafe {
             crate::ffi::munge_ctx_get(self.ctx, MungeOption::EncodeTime as i32, &mut c_time)
         };
 
-        let rust_time: SystemTime = UNIX_EPOCH + Duration::from_secs(c_time as u64);
+        let date_time: DateTime<Utc> =
+            DateTime::from_timestamp(c_time, 0).ok_or(Error::InvalidTime)?;
 
-        self.error_check_time(_err, rust_time)
+        self.error_check_time(_err, date_time)
     }
 
-    /// Retrieves the decode time for the current context.
-    ///
-    /// This function calls the MUNGE library to obtain the decode time, which is
-    /// represented as a `time_t`. The returned time is converted to Rust's
-    /// [`SystemTime`] representation.
+    /// Retrieves the decode time for the current context and converts it to a `DateTime<Utc>`.
     ///
     /// # Returns
     ///
-    /// Returns a `Result<SystemTime, Error>`, where:
-    /// - `Ok(SystemTime)` contains the decode time on success.
-    /// - `Err(Error)` if the function call to the MUNGE library fails.
+    /// Returns a `Result<DateTime<Utc>, Error>`, where:
+    /// - `Ok(DateTime<Utc>)` contains the decode time on success.
+    /// - `Err(Error)` if the function call to the MUNGE library fails or if the conversion
+    ///   to a `DateTime<Utc>` is invalid.
     ///
     /// # Errors
     ///
-    /// Returns an [`Error`] if:
-    /// - The function call to `munge_ctx_get` fails.
+    /// Returns an `Error` if:
+    /// - The function call to `munge_ctx_get` fails, as defined by the MUNGE library.
+    /// - The conversion from `time_t` to `DateTime<Utc>` fails.
     ///
     /// # Example
     ///
     /// ```ignore
     /// let ctx = Context::new(); // Hypothetical function to create a new context
     /// match ctx.decode_time() {
-    ///     Ok(time) => println!("Decode time: {:?}", time),
+    ///     Ok(date_time) => println!("Decode time: {:?}", date_time),
     ///     Err(e) => eprintln!("Failed to retrieve decode time: {:?}", e),
     /// }
     /// ```
-    pub fn decode_time(&self) -> Result<SystemTime, Error> {
+    pub fn decode_time(&self) -> Result<DateTime<Utc>, Error> {
         let mut c_time: libc::time_t = 0i64;
 
         let _err = unsafe {
             crate::ffi::munge_ctx_get(self.ctx, MungeOption::DecodeTime as i32, &mut c_time)
         };
 
-        let rust_time: SystemTime = UNIX_EPOCH + Duration::from_secs(c_time as u64);
+        let date_time: DateTime<Utc> =
+            DateTime::from_timestamp(c_time, 0).ok_or(Error::InvalidTime)?;
 
-        self.error_check_time(_err, rust_time)
+        self.error_check_time(_err, date_time)
     }
 
     /// Retrieves the user ID (UID) restriction for the current context.
@@ -648,8 +652,28 @@ impl Context {
         }
     }
 
-    //TODO: Documentation
-    pub fn str_error(&self) -> Result<Option<String>, Utf8Error> {
+    /// Retrieves a human-readable error message associated with the current context.
+    ///
+    /// This function calls the MUNGE library's `munge_ctx_strerror` function to obtain an
+    /// error message for the current context. If there is no error present, it returns `None`.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<Option<String>, Utf8Error>`, where:
+    /// - `Ok(Some(String))` contains the error message if it exists.
+    /// - `Ok(None)` if there is no error message associated with the context.
+    /// - `Err(Utf8Error)` if the conversion of the error message to a valid UTF-8 string fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// match ctx.str_error() {
+    ///     Ok(Some(message)) => println!("Error message: {}", message),
+    ///     Ok(None) => println!("No error message available."),
+    ///     Err(e) => eprintln!("Failed to retrieve error message: {:?}", e),
+    /// }
+    /// ```
+    fn str_error(&self) -> Result<Option<String>, Utf8Error> {
         let err: *const libc::c_char = unsafe { crate::ffi::munge_ctx_strerror(self.ctx) };
 
         if err.is_null() {
@@ -680,6 +704,22 @@ impl Context {
     //     }
     // }
 
+    /// Checks the result of a MUNGE operation that returns a `u32`.
+    ///
+    /// This function examines the provided error code from a MUNGE operation. If the error code
+    /// is non-zero, it constructs an `Error` containing a detailed error message. If the operation
+    /// was successful, it returns the specified return value.
+    ///
+    /// # Arguments
+    ///
+    /// * `_err` - The error code returned by the MUNGE operation.
+    /// * `ret_val` - The return value to return on success.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<u32, Error>`, where:
+    /// - `Ok(u32)` contains the return value if the operation was successful.
+    /// - `Err(Error)` if the operation failed, including a descriptive error message.
     fn error_check_u32(&self, _err: u32, ret_val: u32) -> Result<u32, Error> {
         if _err != 0 {
             Err(Error::MungeError(
@@ -693,6 +733,22 @@ impl Context {
             Ok(ret_val)
         }
     }
+    /// Checks the result of a MUNGE operation that returns an `i32`.
+    ///
+    /// This function examines the provided error code from a MUNGE operation. If the error code
+    /// is non-zero, it constructs an `Error` containing a detailed error message. If the operation
+    /// was successful, it returns the specified return value.
+    ///
+    /// # Arguments
+    ///
+    /// * `_err` - The error code returned by the MUNGE operation.
+    /// * `ret_val` - The return value to return on success.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<i32, Error>`, where:
+    /// - `Ok(i32)` contains the return value if the operation was successful.
+    /// - `Err(Error)` if the operation failed, including a descriptive error message.
     fn error_check_i32(&self, _err: u32, ret_val: i32) -> Result<i32, Error> {
         if _err != 0 {
             Err(Error::MungeError(
@@ -706,7 +762,27 @@ impl Context {
             Ok(ret_val)
         }
     }
-    fn error_check_time(&self, _err: u32, rust_time: SystemTime) -> Result<SystemTime, Error> {
+    /// Checks the result of a MUNGE operation that returns a `DateTime<Utc>`.
+    ///
+    /// This function examines the provided error code from a MUNGE operation. If the error code
+    /// is non-zero, it constructs an `Error` containing a detailed error message. If the operation
+    /// was successful, it returns the specified `DateTime<Utc>`.
+    ///
+    /// # Arguments
+    ///
+    /// * `_err` - The error code returned by the MUNGE operation.
+    /// * `rust_time` - The `DateTime<Utc>` value to return on success.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<DateTime<Utc>, Error>`, where:
+    /// - `Ok(DateTime<Utc>)` contains the return value if the operation was successful.
+    /// - `Err(Error)` if the operation failed, including a descriptive error message.
+    fn error_check_time(
+        &self,
+        _err: u32,
+        rust_time: DateTime<Utc>,
+    ) -> Result<DateTime<Utc>, Error> {
         if _err != 0 {
             Err(Error::MungeError(
                 MungeError::from_u32(_err),

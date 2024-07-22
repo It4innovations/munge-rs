@@ -11,6 +11,7 @@ build = "build.rs"
 libc = "0.2"
 thiserror = "1.0"
 num_enum = "0.7"
+chrono = "0.4"
 
 [build-dependencies]
 bindgen = "0.69.4"

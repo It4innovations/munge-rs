@@ -184,6 +184,8 @@ pub enum Error {
     /// An error indicating a failure when converting from a primitive to a `MungeZip`.
     #[error("Failed to convert from primitive to MungeZip: {0}")]
     TryFromPrimitiveZip(#[from] TryFromPrimitiveError<MungeZip>),
+    #[error("Time is out of range or invalid nanosecond")]
+    InvalidTime,
 }
 
 impl From<FromUtf8Error> for Error {
