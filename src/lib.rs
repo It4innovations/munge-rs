@@ -21,4 +21,4 @@ mod munge;
 pub use credential::Credential;
 pub use ctx::Context;
 pub use enums::{Error, MungeCipher, MungeError, MungeMac, MungeOption, MungeZip};
-pub use munge::{decode, encode};
+pub use munge::{decode, encode, str_error};

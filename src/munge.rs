@@ -1,6 +1,7 @@
 use std::{
     ffi::{self, CStr, CString},
     ptr,
+    str::Utf8Error,
 };
 
 use crate::{
@@ -45,7 +46,13 @@ pub fn encode(msg: &str, ctx: Option<&Context>) -> Result<String, enums::Error> 
     };
 
     if err != 0 {
-        Err(MungeError::from_u32(err).into())
+        Err(enums::Error::MungeError(
+            MungeError::from_u32(err),
+            match str_error(err)? {
+                Some(s) => s,
+                None => "No error description available.".to_string(),
+            },
+        ))
     } else {
         let resp = Ok(unsafe { CStr::from_ptr(cred as *const i8) }
             .to_str()?
@@ -88,7 +95,13 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
     };
 
     if err != 0 {
-        Err(MungeError::from_u32(err).into())
+        Err(enums::Error::MungeError(
+            MungeError::from_u32(err),
+            match str_error(err)? {
+                Some(s) => s,
+                None => "No error description available.".to_string(),
+            },
+        ))
     } else {
         let resp: String = if !dmsg.is_null() {
             unsafe { CStr::from_ptr(dmsg as *const i8) }
@@ -106,16 +119,18 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
     }
 }
 
-pub fn str_error(error: u32) -> Result<Option<String>, enums::Error> {
-    let mut err: *const libc::c_char = ptr::null();
+pub fn str_error(e: u32) -> Result<Option<String>, Utf8Error> {
+    let err: *const libc::c_char = unsafe { crate::ffi::munge_strerror(e) };
 
-    err = unsafe { crate::ffi::munge_strerror(error) };
     if err.is_null() {
-        Ok(None)
-    } else {
-        let out_err = unsafe { CStr::from_ptr(err) }.to_str()?.to_owned();
-        Ok(Some(out_err))
+        return Ok(None); // No error condition
     }
+
+    // The conversion from CStr to &str and from &str to String
+    let out_err = Some(unsafe { CStr::from_ptr(err) }.to_str()?);
+
+    // Return the error message if parsing was successful, otherwise None
+    Ok(out_err.map(|s| s.to_string()))
 }
 
 #[cfg(test)]

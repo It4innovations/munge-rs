@@ -4,6 +4,7 @@ use std::{
     ffi::{self, CStr, CString},
     path::PathBuf,
     ptr,
+    str::Utf8Error,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -66,8 +67,15 @@ impl Context {
         let _err = unsafe {
             crate::ffi::munge_ctx_set(self.ctx, MungeOption::Socket as i32, c_path.as_ptr())
         };
+
         if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
+            Err(Error::MungeError(
+                MungeError::from_u32(_err),
+                match self.str_error()? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                },
+            ))
         } else {
             Ok(self)
         }
@@ -326,11 +334,7 @@ impl Context {
 
         let _err = unsafe { crate::ffi::munge_ctx_get(self.ctx, option as i32, &mut value) };
 
-        if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
-        } else {
-            Ok(value)
-        }
+        self.error_check_i32(_err, value)
     }
 
     // TODO: Rest of the getters
@@ -467,11 +471,7 @@ impl Context {
         let _err =
             unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::Addr4 as i32, &mut value) };
 
-        if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
-        } else {
-            Ok(value)
-        }
+        self.error_check_u32(_err, value)
     }
 
     /// Retrieves the encode time for the current context.
@@ -509,11 +509,7 @@ impl Context {
 
         let rust_time: SystemTime = UNIX_EPOCH + Duration::from_secs(c_time as u64);
 
-        if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
-        } else {
-            Ok(rust_time)
-        }
+        self.error_check_time(_err, rust_time)
     }
 
     /// Retrieves the decode time for the current context.
@@ -551,11 +547,7 @@ impl Context {
 
         let rust_time: SystemTime = UNIX_EPOCH + Duration::from_secs(c_time as u64);
 
-        if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
-        } else {
-            Ok(rust_time)
-        }
+        self.error_check_time(_err, rust_time)
     }
 
     /// Retrieves the user ID (UID) restriction for the current context.
@@ -587,11 +579,7 @@ impl Context {
             crate::ffi::munge_ctx_get(self.ctx, MungeOption::UidRestriction as i32, &mut c_uid)
         };
 
-        if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
-        } else {
-            Ok(c_uid)
-        }
+        self.error_check_u32(_err, c_uid)
     }
 
     /// Retrieves the group ID (GID) restriction for the current context.
@@ -623,11 +611,7 @@ impl Context {
             crate::ffi::munge_ctx_get(self.ctx, MungeOption::GidRestriction as i32, &mut c_gid)
         };
 
-        if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
-        } else {
-            Ok(c_gid)
-        }
+        self.error_check_u32(_err, c_gid)
     }
 
     /// Retrieves the socket path from the context and returns it as a [`PathBuf`].
@@ -654,52 +638,29 @@ impl Context {
         let socket = unsafe { CStr::from_ptr(c_path) }.to_str()?.to_owned();
 
         if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
+            // Err(MungeError::from_u32(_err).into())
+            Err(Error::MungeError(
+                MungeError::from_u32(_err),
+                "ctx_str_error()".to_string(),
+            ))
         } else {
             Ok(PathBuf::from(socket))
         }
     }
 
-    // TODO: Check if this is ok, also should this be `pub` or `pub(crate)`
-    // Could be called in display impl of `MungeError`
-    // DOCUMENTATION
+    //TODO: Documentation
+    pub fn str_error(&self) -> Result<Option<String>, Utf8Error> {
+        let err: *const libc::c_char = unsafe { crate::ffi::munge_ctx_strerror(self.ctx) };
 
-    /// Retrieves the error message associated with the current state of the context.
-    ///
-    /// This function calls the MUNGE library to obtain a human-readable error message
-    /// if there is an error present in the context.
-    ///
-    /// # Returns
-    ///
-    /// Returns an `Option<String>`, where:
-    /// - `Some(String)` contains the error message as a UTF-8 string if an error exists.
-    /// - `None` if there is no error message available.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `Error` if:
-    /// - The conversion from the error message fails (e.g., the message is not valid UTF-8).
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let ctx = Context::new(); // Hypothetical function to create a new context
-    /// match ctx.str_error() {
-    ///     Ok(Some(message)) => println!("Error message: {}", message),
-    ///     Ok(None) => println!("No error message available."),
-    ///     Err(e) => eprintln!("Failed to retrieve error message: {:?}", e),
-    /// }
-    /// ```
-    pub fn str_errror(&self) -> Result<Option<String>, Error> {
-        let mut err: *const libc::c_char = ptr::null();
-
-        err = unsafe { crate::ffi::munge_ctx_strerror(self.ctx) };
         if err.is_null() {
-            Ok(None)
-        } else {
-            let out_err = unsafe { CStr::from_ptr(err) }.to_str()?.to_owned();
-            Ok(Some(out_err))
+            return Ok(None); // No error condition
         }
+
+        // The conversion from CStr to &str and from &str to String
+        let out_err = Some(unsafe { CStr::from_ptr(err) }.to_str()?);
+
+        // Return the error message if parsing was successful, otherwise None
+        Ok(out_err.map(|s| s.to_string()))
     }
 
     // pub fn realm(&self) -> Result<String, Error> {
@@ -718,6 +679,46 @@ impl Context {
     //         Ok(realm)
     //     }
     // }
+
+    fn error_check_u32(&self, _err: u32, ret_val: u32) -> Result<u32, Error> {
+        if _err != 0 {
+            Err(Error::MungeError(
+                MungeError::from_u32(_err),
+                match self.str_error()? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                },
+            ))
+        } else {
+            Ok(ret_val)
+        }
+    }
+    fn error_check_i32(&self, _err: u32, ret_val: i32) -> Result<i32, Error> {
+        if _err != 0 {
+            Err(Error::MungeError(
+                MungeError::from_u32(_err),
+                match self.str_error()? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                },
+            ))
+        } else {
+            Ok(ret_val)
+        }
+    }
+    fn error_check_time(&self, _err: u32, rust_time: SystemTime) -> Result<SystemTime, Error> {
+        if _err != 0 {
+            Err(Error::MungeError(
+                MungeError::from_u32(_err),
+                match self.str_error()? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                },
+            ))
+        } else {
+            Ok(rust_time)
+        }
+    }
 }
 
 impl Drop for Context {
@@ -736,15 +737,17 @@ mod context_tests {
     #[test]
     fn str_err_test() {
         let ctx = Context::new();
-        let error = ctx.str_errror().unwrap();
+        let error = ctx.str_error().unwrap();
         if let Some(str) = error {
-            println!("Error: {str}")
+            println!("Error: {str}");
+        } else {
+            println!("No Error.");
         }
     }
 
     #[test]
     fn getter_test() {
-        let mut ctx = Context::new();
+        let ctx = Context::new();
         let res = ctx.socket().unwrap();
         let i = ctx.get_ctx_opt(MungeOption::Ttl).unwrap();
         println!("Result: {:?}", res);
