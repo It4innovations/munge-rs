@@ -135,28 +135,53 @@ impl MungeError {
     }
 }
 
-/// Types of errors that can occur in the library.
+/// The various errors that can occur within the MUNGE library wrapper.
+///
+/// This enum consolidates error types from the MUNGE library and related conversions,
+/// allowing for comprehensive error handling throughout the API.
+///
+/// # Example
+///
+/// ```ignore
+/// fn example_function() -> Result<(), Error> {
+///     // Some logic that might result in an error
+///     Err(Error::NonUtf8SocketPath)
+/// }
+/// ```
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("munge errored: {0}")]
-    MungeError(#[from] MungeError),
+    /// An error returned from the MUNGE library.
+    // #[error("munge errored: {0}")]
+    // MungeError(#[from] MungeError),
 
+    #[error("Munge errored: {0}, {1}")]
+    MungeError(MungeError, String),
+
+    /// An error indicating that a C string could not be converted to a valid UTF-8 Rust string.
     #[error("C string to Rust string lift failed: got non-UTF8 output: {0}")]
     InvalidUtf8(#[from] Utf8Error),
 
+    /// An error related to invalid UTF-8 during Rust string conversions.
     #[error("Rust string to UTF-8 conversion failed: got invalid UTF-8 output")]
     InvalidFromUtf8(FromUtf8Error),
 
+    /// An error indicating that a string conversion failed due to an internal null byte.
     #[error("Rust string to C string lift failed: input had inner null: {0}")]
     InnerNull(#[from] NulError),
 
+    /// An error indicating the socket path provided is not valid UTF-8.
     #[error("Unable to use a non UTF8 socket path")]
     NonUtf8SocketPath,
 
+    /// An error indicating a failure when converting from a primitive to a `MungeCipher`.
     #[error("Failed to convert from primitive to MungeCipher: {0}")]
     TryFromPrimitiveCipher(#[from] TryFromPrimitiveError<MungeCipher>),
+
+    /// An error indicating a failure when converting from a primitive to a `MungeMac`.
     #[error("Failed to convert from primitive to MungeMac: {0}")]
     TryFromPrimitiveMac(#[from] TryFromPrimitiveError<MungeMac>),
+
+    /// An error indicating a failure when converting from a primitive to a `MungeZip`.
     #[error("Failed to convert from primitive to MungeZip: {0}")]
     TryFromPrimitiveZip(#[from] TryFromPrimitiveError<MungeZip>),
 }
@@ -188,7 +213,7 @@ pub enum MungeCipher {
     Aes256 = c::munge_cipher_MUNGE_CIPHER_AES256,
 }
 
-/// Represents MUNGE message authentication code (MAC) types.
+/// Message authentication code (MAC) types.
 ///
 /// Each variant maps to a corresponding constant in the MUNGE C library.
 ///
@@ -210,7 +235,7 @@ pub enum MungeMac {
     SHA512 = c::munge_mac_MUNGE_MAC_SHA512,
 }
 
-/// Represents MUNGE compression types.
+/// Compression types.
 ///
 /// Each variant maps to a corresponding constant in the MUNGE C library.
 ///
