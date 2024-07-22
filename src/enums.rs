@@ -9,20 +9,12 @@ use crate::ffi as c;
 /// This enum wraps various context options that can be used with MUNGE encoding and decoding operations.
 ///
 /// Each variant represents a different option and maps to a corresponding constant in the MUNGE C library.
-///
-/// # Examples
-///
-/// ```ignore
-/// let option = MungeOption::CIPHER_TYPE;
-/// println!("Option: {:?}", option);
-/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MungeOption {
+pub(crate) enum MungeOption {
     CipherType = c::munge_opt_MUNGE_OPT_CIPHER_TYPE,
     MacType = c::munge_opt_MUNGE_OPT_MAC_TYPE,
     ZipType = c::munge_opt_MUNGE_OPT_ZIP_TYPE,
-    Realm = c::munge_opt_MUNGE_OPT_REALM,
     Ttl = c::munge_opt_MUNGE_OPT_TTL,
     Addr4 = c::munge_opt_MUNGE_OPT_ADDR4,
     EncodeTime = c::munge_opt_MUNGE_OPT_ENCODE_TIME,
@@ -135,25 +127,11 @@ impl MungeError {
     }
 }
 
-/// The various errors that can occur within the MUNGE library wrapper.
-///
-/// This enum consolidates error types from the MUNGE library and related conversions,
-/// allowing for comprehensive error handling throughout the API.
-///
-/// # Example
-///
-/// ```ignore
-/// fn example_function() -> Result<(), Error> {
-///     // Some logic that might result in an error
-///     Err(Error::NonUtf8SocketPath)
-/// }
-/// ```
+/// Consolidates error types from the MUNGE library and related conversions,
+/// allowing for comprehensive error handling.
 #[derive(Debug, Error)]
 pub enum Error {
     /// An error returned from the MUNGE library.
-    // #[error("munge errored: {0}")]
-    // MungeError(#[from] MungeError),
-
     #[error("Munge errored: {0}, {1}")]
     MungeError(MungeError, String),
 
@@ -163,7 +141,7 @@ pub enum Error {
 
     /// An error related to invalid UTF-8 during Rust string conversions.
     #[error("Rust string to UTF-8 conversion failed: got invalid UTF-8 output")]
-    InvalidFromUtf8(FromUtf8Error),
+    InvalidFromUtf8(#[from] FromUtf8Error),
 
     /// An error indicating that a string conversion failed due to an internal null byte.
     #[error("Rust string to C string lift failed: input had inner null: {0}")]
@@ -188,22 +166,9 @@ pub enum Error {
     InvalidTime,
 }
 
-impl From<FromUtf8Error> for Error {
-    fn from(value: FromUtf8Error) -> Self {
-        Error::InvalidFromUtf8(value)
-    }
-}
-
 /// Symmetric cipher types.
 ///
 /// Each variant maps to a corresponding constant in the MUNGE C library.
-///
-/// # Examples
-///
-/// ```ignore
-/// let cipher = MungeCipher::AES128;
-/// println!("Cipher: {:?}", cipher);
-/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 pub enum MungeCipher {
@@ -218,13 +183,6 @@ pub enum MungeCipher {
 /// Message authentication code (MAC) types.
 ///
 /// Each variant maps to a corresponding constant in the MUNGE C library.
-///
-/// # Examples
-///
-/// ```ignore
-/// let mac = MungeMac::SHA256;
-/// println!("MAC: {:?}", mac);
-/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 pub enum MungeMac {
@@ -240,13 +198,6 @@ pub enum MungeMac {
 /// Compression types.
 ///
 /// Each variant maps to a corresponding constant in the MUNGE C library.
-///
-/// # Examples
-///
-/// ```ignore
-/// let zip = MungeZip::BZLIB;
-/// println!("ZIP: {:?}", zip);
-/// ```
 #[repr(u32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive)]
 pub enum MungeZip {
