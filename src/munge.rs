@@ -119,7 +119,34 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
     }
 }
 
-pub fn str_error(e: u32) -> Result<Option<String>, Utf8Error> {
+/// Retrieves a human-readable error message associated with a given MUNGE error code.
+///
+/// This function calls the MUNGE library's `munge_strerror` function to obtain an
+/// error message corresponding to the provided error code. If the error code does
+/// not correspond to any error, it returns `None`.
+///
+/// # Arguments
+///
+/// * `e` - The error code of type `u32` for which to retrieve the error message.
+///
+/// # Returns
+///
+/// Returns a `Result<Option<String>, Utf8Error>`, where:
+/// - `Ok(Some(String))` contains the error message if it exists.
+/// - `Ok(None)` if there is no error message associated with the code.
+/// - `Err(Utf8Error)` if the conversion of the error message to a valid UTF-8 string fails.
+///
+/// # Example
+///
+/// ```ignore
+/// let error_code: u32 = 1; // Example error code
+/// match str_error(error_code) {
+///     Ok(Some(message)) => println!("Error message: {}", message),
+///     Ok(None) => println!("No error message available."),
+///     Err(e) => eprintln!("Failed to retrieve error message: {:?}", e),
+/// }
+/// ```
+pub(crate) fn str_error(e: u32) -> Result<Option<String>, Utf8Error> {
     let err: *const libc::c_char = unsafe { crate::ffi::munge_strerror(e) };
 
     if err.is_null() {

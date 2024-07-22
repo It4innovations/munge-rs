@@ -1,8 +1,9 @@
-#![warn(missing_docs)]
-
 //! Rust FFI binding for MUNGE Uid 'N' Gid Emporium
 //!
-//!
+//!```sh
+//! cargo test -q -- --nocapture
+//!```
+//! This will run the tests without capturing the output so that you can see the test outputs.
 
 #[allow(
     dead_code,
@@ -21,4 +22,4 @@ mod munge;
 pub use credential::Credential;
 pub use ctx::Context;
 pub use enums::{Error, MungeCipher, MungeError, MungeMac, MungeOption, MungeZip};
-pub use munge::{decode, encode, str_error};
+pub use munge::{decode, encode};
