@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::ffi as c;
 
-/// Represents MUNGE context options.
+/// Context options.
 ///
 /// This enum wraps various context options that can be used with MUNGE encoding and decoding operations.
 ///
@@ -32,7 +32,7 @@ pub enum MungeOption {
     GidRestriction = c::munge_opt_MUNGE_OPT_GID_RESTRICTION,
 }
 
-/// Represents possible error codes returned by the MUNGE library.
+/// Possible error codes returned by the MUNGE library.
 ///
 /// These error codes are mapped to their corresponding constants in the MUNGE C library.
 #[repr(u32)]
@@ -135,29 +135,29 @@ impl MungeError {
     }
 }
 
-/// Represents different types of errors that can occur in the library.
+/// Types of errors that can occur in the library.
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("munge errored: {0}")]
     MungeError(#[from] MungeError),
 
-    #[error("C string to Rust string lift failed: got non-UTF8 output")]
+    #[error("C string to Rust string lift failed: got non-UTF8 output: {0}")]
     InvalidUtf8(#[from] Utf8Error),
 
     #[error("Rust string to UTF-8 conversion failed: got invalid UTF-8 output")]
     InvalidFromUtf8(FromUtf8Error),
 
-    #[error("Rust string to C string lift failed: input had inner null")]
+    #[error("Rust string to C string lift failed: input had inner null: {0}")]
     InnerNull(#[from] NulError),
 
     #[error("Unable to use a non UTF8 socket path")]
     NonUtf8SocketPath,
 
-    #[error("Failed to convert from primitive to MungeCipher")]
+    #[error("Failed to convert from primitive to MungeCipher: {0}")]
     TryFromPrimitiveCipher(#[from] TryFromPrimitiveError<MungeCipher>),
-    #[error("Failed to convert from primitive to MungeMac")]
+    #[error("Failed to convert from primitive to MungeMac: {0}")]
     TryFromPrimitiveMac(#[from] TryFromPrimitiveError<MungeMac>),
-    #[error("Failed to convert from primitive to MungeZip")]
+    #[error("Failed to convert from primitive to MungeZip: {0}")]
     TryFromPrimitiveZip(#[from] TryFromPrimitiveError<MungeZip>),
 }
 
@@ -167,7 +167,7 @@ impl From<FromUtf8Error> for Error {
     }
 }
 
-/// Represents MUNGE symmetric cipher types.
+/// Symmetric cipher types.
 ///
 /// Each variant maps to a corresponding constant in the MUNGE C library.
 ///

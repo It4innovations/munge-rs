@@ -1,3 +1,5 @@
+#![allow(clippy::new_without_default)]
+
 use std::{
     ffi::{self, CStr, CString},
     path::PathBuf,
@@ -234,34 +236,12 @@ impl Context {
     //     }
     // }
 
-    /// Retrieves the socket path from the context and returns it as a [`PathBuf`].
-    ///
-    /// # Errors
-    ///
-    /// Returns an [`Error`] if the function call to `munge_ctx_get` fails or
-    /// if the string conversion fails.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let mut ctx = /* initialize your context here */;
-    /// match ctx.get_socket() {
-    ///     Ok(path) => println!("Socket path: {:?}", path),
-    ///     Err(e) => eprintln!("Failed to get socket path: {:?}", e),
-    /// }
-    /// ```
-    pub fn socket(&mut self) -> Result<PathBuf, Error> {
-        let mut c_path: *const ffi::c_char = ptr::null();
+    pub fn set_uid_restriction(&mut self, uid: libc::uid_t) -> Result<&mut Self, Error> {
+        todo!()
+    }
 
-        let _err =
-            unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::Socket as i32, &mut c_path) };
-        let socket = unsafe { CStr::from_ptr(c_path) }.to_str()?.to_owned();
-
-        if _err != 0 {
-            Err(MungeError::from_u32(_err).into())
-        } else {
-            Ok(PathBuf::from(socket))
-        }
+    pub fn set_gid_restriction(&mut self, gid: libc::gid_t) -> Result<&mut Self, Error> {
+        todo!()
     }
 
     /// Retrieves the specified context option as an `i32`.
@@ -296,8 +276,8 @@ impl Context {
     }
 
     // TODO: Rest of the getters
-    // realm (Not supported yet), encode_time, decode_time, uid_restriction,
-    // gid_restriction
+    // realm (Not supported yet)
+    // ctx_strerror
 
     /// Retrieves the time-to-live (TTL) value for the context.
     ///
@@ -400,7 +380,7 @@ impl Context {
         }
     }
 
-    ///
+    /// TODO:
     /// # Example
     ///
     /// ```ignore
@@ -453,6 +433,79 @@ impl Context {
         }
     }
 
+    pub fn uid_restriction(&self) -> Result<libc::uid_t, Error> {
+        let mut c_uid: libc::uid_t = 0;
+
+        let _err = unsafe {
+            crate::ffi::munge_ctx_get(self.ctx, MungeOption::UidRestriction as i32, &mut c_uid)
+        };
+
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
+        } else {
+            Ok(c_uid)
+        }
+    }
+
+    pub fn gid_restriction(&self) -> Result<libc::gid_t, Error> {
+        let mut c_gid: libc::gid_t = 0;
+
+        let _err = unsafe {
+            crate::ffi::munge_ctx_get(self.ctx, MungeOption::GidRestriction as i32, &mut c_gid)
+        };
+
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
+        } else {
+            Ok(c_gid)
+        }
+    }
+
+    /// Retrieves the socket path from the context and returns it as a [`PathBuf`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if the function call to `munge_ctx_get` fails or
+    /// if the string conversion fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = /* initialize your context here */;
+    /// match ctx.get_socket() {
+    ///     Ok(path) => println!("Socket path: {:?}", path),
+    ///     Err(e) => eprintln!("Failed to get socket path: {:?}", e),
+    /// }
+    /// ```
+    pub fn socket(&self) -> Result<PathBuf, Error> {
+        let mut c_path: *const ffi::c_char = ptr::null();
+
+        let _err =
+            unsafe { crate::ffi::munge_ctx_get(self.ctx, MungeOption::Socket as i32, &mut c_path) };
+        let socket = unsafe { CStr::from_ptr(c_path) }.to_str()?.to_owned();
+
+        if _err != 0 {
+            Err(MungeError::from_u32(_err).into())
+        } else {
+            Ok(PathBuf::from(socket))
+        }
+    }
+
+    // TODO: Check if this is ok, also should this be `pub` or `pub(crate)`
+    // Could be called in display impl of `MungeError`
+    // DOCUMENTATION
+    pub fn str_errror(&self) -> Result<Option<String>, Error> {
+        let mut err: *const libc::c_char = ptr::null();
+
+        err = unsafe { crate::ffi::munge_ctx_strerror(self.ctx) };
+        if err.is_null() {
+            Ok(None)
+        } else {
+            let out_err = unsafe { CStr::from_ptr(err) }.to_str()?.to_owned();
+            Ok(Some(out_err))
+        }
+    }
+
     // pub fn realm(&self) -> Result<String, Error> {
     //     let mut c_str: *const ffi::c_char = ptr::null();
     //
@@ -483,6 +536,15 @@ mod context_tests {
         ctx::Context,
         enums::{MungeCipher, MungeMac, MungeOption, MungeZip},
     };
+
+    #[test]
+    fn str_err_test() {
+        let ctx = Context::new();
+        let error = ctx.str_errror().unwrap();
+        if let Some(str) = error {
+            println!("Error: {str}")
+        }
+    }
 
     #[test]
     fn getter_test() {
