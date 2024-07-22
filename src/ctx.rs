@@ -236,12 +236,70 @@ impl Context {
     //     }
     // }
 
-    pub fn set_uid_restriction(&mut self, uid: libc::uid_t) -> Result<&mut Self, Error> {
-        todo!()
+    /// Sets the user ID (UID) restriction for the current context.
+    ///
+    /// This function updates the context to restrict operations based on the specified
+    /// user ID, allowing for security measures related to user permissions.
+    ///
+    /// # Arguments
+    ///
+    /// * `uid` - The [`libc::uid_t`] value representing the user ID restriction to set.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<&mut Self, MungeError>`, where:
+    /// - `Ok(&mut Self)` allows for method chaining on success.
+    /// - `Err(MungeError)` if the function call to the MUNGE library fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MungeError`] if:
+    /// - The function call to `munge_ctx_set` fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.set_uid_restriction(1001) {
+    ///     Ok(ctx) => println!("UID restriction set successfully"),
+    ///     Err(e) => eprintln!("Failed to set UID restriction: {:?}", e),
+    /// }
+    /// ```
+    pub fn set_uid_restriction(&mut self, uid: libc::uid_t) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::UidRestriction, uid)
     }
 
-    pub fn set_gid_restriction(&mut self, gid: libc::gid_t) -> Result<&mut Self, Error> {
-        todo!()
+    /// Sets the group ID (GID) restriction for the current context.
+    ///
+    /// This function updates the context to restrict operations based on the specified
+    /// group ID, enabling security measures related to group permissions.
+    ///
+    /// # Arguments
+    ///
+    /// * `gid` - The [`libc::gid_t`] value representing the group ID restriction to set.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<&mut Self, MungeError>`, where:
+    /// - `Ok(&mut Self)` allows for method chaining on success.
+    /// - `Err(MungeError)` if the function call to the MUNGE library fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MungeError`] if:
+    /// - The function call to `munge_ctx_set` fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let mut ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.set_gid_restriction(1001) {
+    ///     Ok(ctx) => println!("GID restriction set successfully"),
+    ///     Err(e) => eprintln!("Failed to set GID restriction: {:?}", e),
+    /// }
+    /// ```
+    pub fn set_gid_restriction(&mut self, gid: libc::gid_t) -> Result<&mut Self, MungeError> {
+        self.set_ctx_opt(MungeOption::GidRestriction, gid)
     }
 
     /// Retrieves the specified context option as an `i32`.
@@ -277,7 +335,6 @@ impl Context {
 
     // TODO: Rest of the getters
     // realm (Not supported yet)
-    // ctx_strerror
 
     /// Retrieves the time-to-live (TTL) value for the context.
     ///
@@ -380,7 +437,23 @@ impl Context {
         }
     }
 
-    /// TODO:
+    /// Retrieves the IPv4 address (Addr4) associated with the current context.
+    ///
+    /// This function calls the MUNGE library to obtain the IPv4 address, which is
+    /// represented as a `u32`. The returned value can be converted to an `Ipv4Addr`
+    /// for easier manipulation and display.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<u32, Error>`, where:
+    /// - `Ok(u32)` contains the IPv4 address on success.
+    /// - `Err(Error)` if the function call to the MUNGE library fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if:
+    /// - The function call to `munge_ctx_get` fails.
+    ///
     /// # Example
     ///
     /// ```ignore
@@ -401,6 +474,32 @@ impl Context {
         }
     }
 
+    /// Retrieves the encode time for the current context.
+    ///
+    /// This function calls the MUNGE library to obtain the encode time, which is
+    /// represented as a `time_t`. The returned time is converted to Rust's
+    /// [`SystemTime`] representation.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<SystemTime, Error>`, where:
+    /// - `Ok(SystemTime)` contains the encode time on success.
+    /// - `Err(Error)` if the function call to the MUNGE library fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if:
+    /// - The function call to `munge_ctx_get` fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.encode_time() {
+    ///     Ok(time) => println!("Encode time: {:?}", time),
+    ///     Err(e) => eprintln!("Failed to retrieve encode time: {:?}", e),
+    /// }
+    /// ```
     pub fn encode_time(&self) -> Result<SystemTime, Error> {
         let mut c_time: libc::time_t = 0i64;
 
@@ -417,6 +516,32 @@ impl Context {
         }
     }
 
+    /// Retrieves the decode time for the current context.
+    ///
+    /// This function calls the MUNGE library to obtain the decode time, which is
+    /// represented as a `time_t`. The returned time is converted to Rust's
+    /// [`SystemTime`] representation.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<SystemTime, Error>`, where:
+    /// - `Ok(SystemTime)` contains the decode time on success.
+    /// - `Err(Error)` if the function call to the MUNGE library fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if:
+    /// - The function call to `munge_ctx_get` fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.decode_time() {
+    ///     Ok(time) => println!("Decode time: {:?}", time),
+    ///     Err(e) => eprintln!("Failed to retrieve decode time: {:?}", e),
+    /// }
+    /// ```
     pub fn decode_time(&self) -> Result<SystemTime, Error> {
         let mut c_time: libc::time_t = 0i64;
 
@@ -433,6 +558,28 @@ impl Context {
         }
     }
 
+    /// Retrieves the user ID (UID) restriction for the current context.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<libc::uid_t, Error>`, where:
+    /// - `Ok(uid_t)` contains the user ID restriction on success.
+    /// - `Err(Error)` if the function call to the MUNGE library fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if:
+    /// - The function call to `munge_ctx_get` fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.uid_restriction() {
+    ///     Ok(uid) => println!("UID restriction: {}", uid),
+    ///     Err(e) => eprintln!("Failed to retrieve UID restriction: {:?}", e),
+    /// }
+    /// ```
     pub fn uid_restriction(&self) -> Result<libc::uid_t, Error> {
         let mut c_uid: libc::uid_t = 0;
 
@@ -447,6 +594,28 @@ impl Context {
         }
     }
 
+    /// Retrieves the group ID (GID) restriction for the current context.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<libc::gid_t, Error>`, where:
+    /// - `Ok(gid_t)` contains the group ID restriction on success.
+    /// - `Err(Error)` if the function call to the MUNGE library fails.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] if:
+    /// - The function call to `munge_ctx_get` fails.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.gid_restriction() {
+    ///     Ok(gid) => println!("GID restriction: {}", gid),
+    ///     Err(e) => eprintln!("Failed to retrieve GID restriction: {:?}", e),
+    /// }
+    /// ```
     pub fn gid_restriction(&self) -> Result<libc::gid_t, Error> {
         let mut c_gid: libc::gid_t = 0;
 
@@ -494,6 +663,33 @@ impl Context {
     // TODO: Check if this is ok, also should this be `pub` or `pub(crate)`
     // Could be called in display impl of `MungeError`
     // DOCUMENTATION
+
+    /// Retrieves the error message associated with the current state of the context.
+    ///
+    /// This function calls the MUNGE library to obtain a human-readable error message
+    /// if there is an error present in the context.
+    ///
+    /// # Returns
+    ///
+    /// Returns an `Option<String>`, where:
+    /// - `Some(String)` contains the error message as a UTF-8 string if an error exists.
+    /// - `None` if there is no error message available.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `Error` if:
+    /// - The conversion from the error message fails (e.g., the message is not valid UTF-8).
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let ctx = Context::new(); // Hypothetical function to create a new context
+    /// match ctx.str_error() {
+    ///     Ok(Some(message)) => println!("Error message: {}", message),
+    ///     Ok(None) => println!("No error message available."),
+    ///     Err(e) => eprintln!("Failed to retrieve error message: {:?}", e),
+    /// }
+    /// ```
     pub fn str_errror(&self) -> Result<Option<String>, Error> {
         let mut err: *const libc::c_char = ptr::null();
 
