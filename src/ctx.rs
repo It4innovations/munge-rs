@@ -16,6 +16,8 @@ use crate::{
 };
 
 /// Context used for managing options and settings.
+
+#[derive(Debug)]
 pub struct Context {
     pub(crate) ctx: *mut crate::ffi::munge_ctx,
 }
@@ -775,6 +777,18 @@ mod context_tests {
         ctx::Context,
         enums::{MungeCipher, MungeMac, MungeOption, MungeZip},
     };
+
+    #[test]
+    fn copy_test() {
+        let mut ctx = Context::new();
+        ctx.set_ttl(420).unwrap().set_zip(MungeZip::Zlib).unwrap();
+        let ctx_copy = ctx.copy();
+
+        assert_eq!(ctx_copy.ttl().unwrap(), 420);
+        assert_eq!(ctx_copy.zip().unwrap(), MungeZip::Zlib);
+
+        // assert_eq!(ctx, ctx_copy);
+    }
 
     #[test]
     fn str_err_test() {
