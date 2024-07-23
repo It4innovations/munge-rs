@@ -48,9 +48,16 @@ pub fn encode(msg: &str, ctx: Option<&Context>) -> Result<String, enums::Error> 
     if err != 0 {
         Err(enums::Error::MungeError(
             MungeError::from_u32(err),
-            match str_error(err)? {
-                Some(s) => s,
-                None => "No error description available.".to_string(),
+            if let Some(ctx) = ctx {
+                match ctx.str_error()? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                }
+            } else {
+                match str_error(err)? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                }
             },
         ))
     } else {
@@ -97,9 +104,16 @@ pub fn decode(encoded_msg: String, ctx: Option<&Context>) -> Result<Credential, 
     if err != 0 {
         Err(enums::Error::MungeError(
             MungeError::from_u32(err),
-            match str_error(err)? {
-                Some(s) => s,
-                None => "No error description available.".to_string(),
+            if let Some(ctx) = ctx {
+                match ctx.str_error()? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                }
+            } else {
+                match str_error(err)? {
+                    Some(s) => s,
+                    None => "No error description available.".to_string(),
+                }
             },
         ))
     } else {
