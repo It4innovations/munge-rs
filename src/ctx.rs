@@ -647,7 +647,7 @@ impl Context {
     ///     Err(e) => eprintln!("Failed to retrieve error message: {:?}", e),
     /// }
     /// ```
-    fn str_error(&self) -> Result<Option<String>, Utf8Error> {
+    pub(crate) fn str_error(&self) -> Result<Option<String>, Utf8Error> {
         let err: *const libc::c_char = unsafe { crate::ffi::munge_ctx_strerror(self.ctx) };
 
         if err.is_null() {
