@@ -28,6 +28,13 @@ impl Context {
         }
     }
 
+    /// Returns a copy of [`Context`]
+    pub fn copy(&self) -> Self {
+        Context {
+            ctx: unsafe { crate::ffi::munge_ctx_copy(self.ctx) },
+        }
+    }
+
     /// Sets the socket path in the context to the given `PathBuf`.
     ///
     /// # Arguments
