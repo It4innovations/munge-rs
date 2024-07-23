@@ -16,8 +16,6 @@ use crate::{
 };
 
 /// Context used for managing options and settings.
-
-#[derive(Debug)]
 pub struct Context {
     pub(crate) ctx: *mut crate::ffi::munge_ctx,
 }
@@ -27,13 +25,6 @@ impl Context {
     pub fn new() -> Self {
         Context {
             ctx: unsafe { crate::ffi::munge_ctx_create() },
-        }
-    }
-
-    /// Returns a copy of [`Context`]
-    pub fn copy(&self) -> Self {
-        Context {
-            ctx: unsafe { crate::ffi::munge_ctx_copy(self.ctx) },
         }
     }
 
@@ -771,6 +762,14 @@ impl Drop for Context {
     }
 }
 
+impl Clone for Context {
+    fn clone(&self) -> Self {
+        Self {
+            ctx: unsafe { crate::ffi::munge_ctx_copy(self.ctx) },
+        }
+    }
+}
+
 #[cfg(test)]
 mod context_tests {
     use crate::{
@@ -782,7 +781,7 @@ mod context_tests {
     fn copy_test() {
         let mut ctx = Context::new();
         ctx.set_ttl(420).unwrap().set_zip(MungeZip::Zlib).unwrap();
-        let ctx_copy = ctx.copy();
+        let ctx_copy = ctx.clone();
 
         assert_eq!(ctx_copy.ttl().unwrap(), 420);
         assert_eq!(ctx_copy.zip().unwrap(), MungeZip::Zlib);
