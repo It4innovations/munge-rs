@@ -1,5 +1,6 @@
 #![allow(clippy::new_without_default)]
 
+use core::fmt;
 use std::{
     ffi::{self, CStr, CString},
     net::Ipv4Addr,
@@ -18,6 +19,18 @@ use crate::{
 /// Context used for managing options and settings.
 pub struct Context {
     pub(crate) ctx: *mut crate::ffi::munge_ctx,
+}
+
+impl fmt::Debug for Context {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Context")
+            .field("socket", &self.socket())
+            .field("ttl", &self.ttl())
+            .field("mac", &self.mac())
+            .field("zip", &self.zip())
+            .field("cipher", &self.cipher())
+            .finish()
+    }
 }
 
 impl Context {
