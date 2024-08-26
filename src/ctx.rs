@@ -21,6 +21,9 @@ pub struct Context {
     pub(crate) ctx: *mut crate::ffi::munge_ctx,
 }
 
+unsafe impl Send for Context {}
+unsafe impl Sync for Context {}
+
 impl fmt::Debug for Context {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Context")
