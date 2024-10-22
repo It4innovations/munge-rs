@@ -1,6 +1,6 @@
 [package]
 name = "munge-rs"
-version = "0.1.3"
+version = "0.1.5"
 edition = "2021"
 description = "Rust FFI binding for MUNGE Uid 'N' Gid Emporium"
 homepage = "https://github.com/It4innovations/munge-rs"
