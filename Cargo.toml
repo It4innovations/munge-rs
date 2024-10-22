@@ -3,6 +3,9 @@ name = "munge-rs"
 version = "0.1.3"
 edition = "2021"
 description = "Rust FFI binding for MUNGE Uid 'N' Gid Emporium"
+homepage = "https://github.com/It4innovations/munge-rs"
+repository = "https://github.com/It4innovations/munge-rs"
+license = "MIT"
 
 build = "build.rs"
 
